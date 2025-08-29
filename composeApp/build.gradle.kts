@@ -15,17 +15,27 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.navigation)
+
+            implementation(libs.filekit.dialogs.compose)
+
+            implementation(projects.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
         jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
+            //仅使用material3
+            //排除material
+            implementation(compose.desktop.currentOs) {
+                exclude(group = "org.jetbrains.compose.material", module = "material-desktop")
+            }
             implementation(libs.kotlinx.coroutinesSwing)
         }
     }

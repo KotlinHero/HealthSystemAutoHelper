@@ -33,3 +33,6 @@ plugins {
 }
 
 include(":composeApp")
+include(":webdriver")
+include("excel")
+include("core")

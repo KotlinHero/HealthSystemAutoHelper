@@ -1,47 +1,88 @@
 package tech.kotlinhero.autohelper
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.ui.tooling.preview.Preview
-
-import healthsystemautohelper.composeapp.generated.resources.Res
-import healthsystemautohelper.composeapp.generated.resources.compose_multiplatform
+import tech.kotlinhero.autohelper.ui.page.TaskExecute
+import tech.kotlinhero.autohelper.ui.page.TaskHistory
+import tech.kotlinhero.autohelper.ui.page.TaskMode
+import tech.kotlinhero.autohelper.ui.route.NavigationRouter
+import tech.kotlinhero.autohelper.ui.route.RouterItem
+import tech.kotlinhero.autohelper.ui.route.TaskExecuteRouterItem
+import tech.kotlinhero.autohelper.ui.theme.DynamicConfigTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
-            }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+    val navController = rememberNavController()
+    var currentPage: RouterItem by remember { mutableStateOf(NavigationRouter.TaskMode) }
+    var hasTaskRunning by remember { mutableStateOf(false) }
+    DynamicConfigTheme {
+        Row {
+            NavigationRail(
+                modifier = Modifier.width(80.dp),
+                containerColor = MaterialTheme.colorScheme.inverseOnSurface,
+            ) {
+                NavigationRouter.entries.forEach { item ->
+                    NavigationRailItem(
+                        icon = {
+                            Icon(
+                                item.icon,
+                                contentDescription = item.label
+                            )
+                        },
+                        label = { Text(item.label) },
+                        selected = currentPage == item,
+                        onClick = {
+                            currentPage = item
+                            navController.navigate(item.route)
+                        }
+                    )
+                }
+                Box(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .align(Alignment.BottomCenter) // 水平居中
+                            .clickable {
+                                currentPage = TaskExecuteRouterItem
+                                navController.navigate(TaskExecuteRouterItem.route)
+                            },
+                    ) {
+                        if (hasTaskRunning) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center),
+                                progress = { 1f }
+                            )
+                        }
+                    }
+                }
+            }
+            NavHost(navController, startDestination = NavigationRouter.TaskMode.route) {
+                composable(NavigationRouter.TaskMode.route) {
+                    TaskMode()
+                }
+                composable(NavigationRouter.TaskHistory.route) {
+                    TaskHistory()
+                }
+                composable(TaskExecuteRouterItem.route) {
+                    TaskExecute()
                 }
             }
         }
