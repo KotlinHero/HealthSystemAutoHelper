@@ -9,11 +9,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import tech.kotlinhero.autohelper.core.TaskModeOverview
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
 
 @Composable
 fun ModeCard(
     modifier: Modifier = Modifier.padding(5.dp),
-    mode: TaskModeOverview
+    mode: TaskModeOverview,
+    taskViewModel: TaskViewModel
 ) {
     Card(
         modifier = modifier
@@ -37,7 +39,7 @@ fun ModeCard(
                         .align(Alignment.CenterEnd)
                         .padding(5.dp),
                     onClick = {
-
+                        taskViewModel.executeTask()
                     }
                 ) {
                     Text(text = "创建任务")

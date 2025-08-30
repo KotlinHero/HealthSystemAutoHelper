@@ -11,13 +11,25 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
 
 @Composable
-fun TaskExecute() {
+fun TaskExecute(
+    taskViewModel: TaskViewModel = viewModel { TaskViewModel() }
+) {
+    val hasTaskExecuting by taskViewModel.hasTaskExecuting
+
+    if (!hasTaskExecuting) {
+        Text(text = "暂无任务执行")
+    } else {
+
+    }
+
     var isTaskFinish by remember { mutableStateOf(true) }
     var finishCount by remember { mutableStateOf(0) }
     var filename by remember { mutableStateOf("未选择文件") }

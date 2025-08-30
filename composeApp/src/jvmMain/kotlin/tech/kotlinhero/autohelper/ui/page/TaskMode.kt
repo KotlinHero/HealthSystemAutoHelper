@@ -9,17 +9,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.kotlinhero.autohelper.core.TaskMode
 import tech.kotlinhero.autohelper.ui.component.ModeCard
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
 
 @Composable
-fun TaskMode() {
+fun TaskMode(
+    taskViewModel: TaskViewModel
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
         Column {
             TaskMode.entries.forEach {
-                ModeCard(mode = it)
+                ModeCard(mode = it, taskViewModel = taskViewModel)
             }
         }
     }

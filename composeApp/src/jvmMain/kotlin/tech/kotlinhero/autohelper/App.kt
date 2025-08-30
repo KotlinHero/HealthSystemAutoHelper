@@ -1,6 +1,5 @@
 package tech.kotlinhero.autohelper
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -8,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,13 +19,16 @@ import tech.kotlinhero.autohelper.ui.route.NavigationRouter
 import tech.kotlinhero.autohelper.ui.route.RouterItem
 import tech.kotlinhero.autohelper.ui.route.TaskExecuteRouterItem
 import tech.kotlinhero.autohelper.ui.theme.DynamicConfigTheme
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
 
 @Composable
 @Preview
-fun App() {
+fun App(
+    taskViewModel: TaskViewModel = viewModel { TaskViewModel() }
+) {
     val navController = rememberNavController()
     var currentPage: RouterItem by remember { mutableStateOf(NavigationRouter.TaskMode) }
-    var hasTaskRunning by remember { mutableStateOf(false) }
+    val hasTaskRunning by taskViewModel.hasTaskExecuting
     DynamicConfigTheme {
         Row {
             NavigationRail(
@@ -76,7 +79,7 @@ fun App() {
             }
             NavHost(navController, startDestination = NavigationRouter.TaskMode.route) {
                 composable(NavigationRouter.TaskMode.route) {
-                    TaskMode()
+                    TaskMode(taskViewModel = taskViewModel)
                 }
                 composable(NavigationRouter.TaskHistory.route) {
                     TaskHistory()
