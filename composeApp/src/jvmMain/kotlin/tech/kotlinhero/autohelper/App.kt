@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import tech.kotlinhero.autohelper.ui.page.Settings
 import tech.kotlinhero.autohelper.ui.page.TaskExecute
 import tech.kotlinhero.autohelper.ui.page.TaskHistory
 import tech.kotlinhero.autohelper.ui.page.TaskMode
@@ -19,16 +20,16 @@ import tech.kotlinhero.autohelper.ui.route.NavigationRouter
 import tech.kotlinhero.autohelper.ui.route.RouterItem
 import tech.kotlinhero.autohelper.ui.route.TaskExecuteRouterItem
 import tech.kotlinhero.autohelper.ui.theme.DynamicConfigTheme
-import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 
 @Composable
 @Preview
 fun App(
-    taskViewModel: TaskViewModel = viewModel { TaskViewModel() }
+    taskExecuteViewModel: TaskExecuteViewModel = viewModel { TaskExecuteViewModel() }
 ) {
     val navController = rememberNavController()
     var currentPage: RouterItem by remember { mutableStateOf(NavigationRouter.TaskMode) }
-    val hasTaskRunning by taskViewModel.hasTaskExecuting
+    val hasTaskRunning by taskExecuteViewModel.hasTaskExecuting
     DynamicConfigTheme {
         Row {
             NavigationRail(
@@ -79,13 +80,16 @@ fun App(
             }
             NavHost(navController, startDestination = NavigationRouter.TaskMode.route) {
                 composable(NavigationRouter.TaskMode.route) {
-                    TaskMode(taskViewModel = taskViewModel)
+                    TaskMode(taskExecuteViewModel)
                 }
                 composable(NavigationRouter.TaskHistory.route) {
                     TaskHistory()
                 }
+                composable(NavigationRouter.Settings.route) {
+                    Settings()
+                }
                 composable(TaskExecuteRouterItem.route) {
-                    TaskExecute()
+                    TaskExecute(taskExecuteViewModel)
                 }
             }
         }

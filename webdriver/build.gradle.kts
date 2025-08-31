@@ -7,7 +7,7 @@ version = "1.0.0"
 
 dependencies {
     api(libs.selenium.api)
-    implementation(libs.selenium.java)
+    api(libs.selenium.java)
     implementation(libs.selenium.chromedriver)
     testImplementation(kotlin("test"))
 }

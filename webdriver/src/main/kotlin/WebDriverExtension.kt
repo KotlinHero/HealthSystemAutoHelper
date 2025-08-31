@@ -1,5 +1,50 @@
 package tech.kotlinhero.autohelper.webdriver
 
+import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
+import org.openqa.selenium.WebElement
+import org.openqa.selenium.interactions.Actions
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
+import tech.kotlinhero.autohelper.webdriver.DefaultFindElementConditionBuilder
+import java.time.Duration
+
 @DslMarker
 annotation class WebDriverDSL
+
+@WebDriverDSL
+fun webDriver(block: WebDriverBuilder.() -> Unit): WebDriver = DefaultWebDriverBuilder().apply { block() }.build()
+
+@WebDriverDSL
+fun WebDriver.findElement(block: FindElementConditionBuilder.() -> By): WebElement {
+    return WebDriverWait(this, Duration.ofSeconds(5)).until(
+        ExpectedConditions.elementToBeClickable(
+            DefaultFindElementConditionBuilder().block()
+        )
+    )
+}
+
+@WebDriverDSL
+fun WebDriver.findElements(block: FindElementConditionBuilder.() -> By): List<WebElement> {
+    return WebDriverWait(this, Duration.ofSeconds(5)).until(
+        ExpectedConditions.presenceOfAllElementsLocatedBy(
+            DefaultFindElementConditionBuilder().block()
+        )
+    )
+}
+
+@WebDriverDSL
+fun WebElement.findElement(block: FindElementConditionBuilder.() -> By): WebElement {
+    return findElement(DefaultFindElementConditionBuilder().block())
+}
+
+@WebDriverDSL
+fun WebDriver.doubleClick(element: WebElement) {
+    Actions(this).doubleClick(element).perform()
+}
+
+@WebDriverDSL
+fun WebDriver.doubleClick(block: () -> WebElement) {
+    doubleClick(block())
+}
 

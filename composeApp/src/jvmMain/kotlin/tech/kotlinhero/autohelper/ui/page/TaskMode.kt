@@ -1,36 +1,158 @@
 package tech.kotlinhero.autohelper.ui.page
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import tech.kotlinhero.autohelper.core.TaskMode
-import tech.kotlinhero.autohelper.ui.component.ModeCard
-import tech.kotlinhero.autohelper.ui.viewmodel.TaskViewModel
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.path
+import kotlinx.coroutines.launch
+import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
+import tech.kotlinhero.autohelper.ui.viewmodel.UserExcelTaskStartParams
 
 @Composable
 fun TaskMode(
-    taskViewModel: TaskViewModel
+    taskExecuteViewModel: TaskExecuteViewModel
 ) {
-    Surface(
+    val scope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackBarHostState) }
     ) {
         Column {
-            TaskMode.entries.forEach {
-                ModeCard(mode = it, taskViewModel = taskViewModel)
+            var showHyperTaskDialog by remember { mutableStateOf(false) }
+            if (showHyperTaskDialog) {
+                Dialog(
+                    onDismissRequest = { showHyperTaskDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        onStart = { params ->
+                            taskExecuteViewModel.startHypertensionVisitImportTask(params)
+                            showHyperTaskDialog = false
+                        }
+                    )
+                }
             }
+            TaskModeItem(
+                modeDescription = "导入高血压随访",
+                onCreateClick = { showHyperTaskDialog = true }
+            )
+            TaskModeItem(
+                modeDescription = "导入糖尿病随访",
+                onCreateClick = {
+                    scope.launch {
+                        snackBarHostState.showSnackbar("正在开发")
+                    }
+                }
+            )
         }
     }
 }
 
 @Composable
-fun TaskModeItem() {
-    var showParamsDialog by remember { mutableStateOf(false) }
+fun UserExcelTaskStartCard(
+    onStart: (params: UserExcelTaskStartParams) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var excelPath by remember { mutableStateOf("") }
+    var excelFilename by remember { mutableStateOf("") }
+    val excelPicker = rememberFilePickerLauncher(
+        type = FileKitType.File(setOf("xlsx"))
+    ) { file ->
+        excelPath = file?.path ?: ""
+        excelFilename = file?.name ?: ""
+    }
+    Card(
+        modifier = modifier
+    ) {
+        TextField(
+            username,
+            onValueChange = { username = it },
+            label = { Text("账号") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = username.isEmpty()
+        )
+        TextField(
+            password,
+            onValueChange = { password = it },
+            label = { Text("密码") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = password.isEmpty()
+        )
+        TextField(
+            excelFilename,
+            onValueChange = { },
+            label = { Text("文件路径") },
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            isError = excelPath.isEmpty()
+        )
 
+        Button(
+            modifier = Modifier.padding(5.dp).fillMaxWidth(),
+            onClick = { excelPicker.launch() }
+        ) {
+            Text(text = "选择文件")
+        }
+        Button(
+            modifier = Modifier.padding(5.dp).fillMaxWidth(),
+            onClick = {
+                if (listOf(username, password, excelPath).all { it.isNotEmpty() }) {
+                    onStart(
+                        UserExcelTaskStartParams(
+                            username,
+                            password,
+                            excelPath
+                        )
+                    )
+                }
+            }
+        ) {
+            Text(text = "启动任务")
+        }
+    }
+}
+
+@Composable
+fun TaskModeItem(
+    onCreateClick: () -> Unit,
+    modeDescription: String,
+) {
+    Card(
+        modifier = Modifier
+            .padding(5.dp)
+            .height(50.dp)
+            .fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(5.dp),
+                text = modeDescription
+            )
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Button(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(5.dp),
+                    onClick = onCreateClick
+                ) {
+                    Text(text = "创建任务")
+                }
+            }
+        }
+    }
 }
