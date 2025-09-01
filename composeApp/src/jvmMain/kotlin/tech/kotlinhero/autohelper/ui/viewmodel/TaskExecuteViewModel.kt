@@ -1,6 +1,7 @@
 package tech.kotlinhero.autohelper.ui.viewmodel
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,11 +17,15 @@ class TaskExecuteViewModel : ViewModel() {
 
     private val _finishCount = mutableStateOf(0)
 
+    private val _taskLog = mutableStateListOf("")
+
     val hasTaskExecuting: State<Boolean> = _hasTaskExecuting
 
     val totalCount: State<Int> = _totalCount
 
     val finishCount: State<Int> = _finishCount
+
+    val taskLog: List<String> = _taskLog
 
     fun startHypertensionVisitImportTask(params: UserExcelTaskStartParams) {
         viewModelScope.launch {
@@ -32,6 +37,9 @@ class TaskExecuteViewModel : ViewModel() {
                     },
                     useFinishCount = {
                         _finishCount.value = it
+                    },
+                    useLog = {
+                        _taskLog.add(it)
                     }
                 )
             }

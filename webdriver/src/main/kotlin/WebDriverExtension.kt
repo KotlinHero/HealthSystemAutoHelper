@@ -6,7 +6,6 @@ import org.openqa.selenium.WebElement
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
-import tech.kotlinhero.autohelper.webdriver.DefaultFindElementConditionBuilder
 import java.time.Duration
 
 @DslMarker
@@ -48,3 +47,24 @@ fun WebDriver.doubleClick(block: () -> WebElement) {
     doubleClick(block())
 }
 
+@WebDriverDSL
+fun WebDriver.css(css: String) = findElement { css(css) }
+
+@WebDriverDSL
+fun WebDriver.css(css: String, block: WebElement.() -> Unit) {
+    css(css).block()
+}
+
+@WebDriverDSL
+fun WebDriver.allByCss(css: String) = findElements { css(css) }
+
+@WebDriverDSL
+fun WebDriver.xpath(xpath: String) = findElement { xpath(xpath) }
+
+@WebDriverDSL
+fun WebDriver.name(name: String) = findElement { name(name) }
+
+@WebDriverDSL
+fun WebDriver.name(name: String, block: WebElement.() -> Unit) {
+    name(name).block()
+}
