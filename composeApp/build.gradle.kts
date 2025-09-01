@@ -25,10 +25,6 @@ kotlin {
 
             implementation(libs.filekit.dialogs.compose)
 
-            implementation(libs.koin.compose)
-            implementation(libs.koin.compose.viewmodel)
-            implementation(libs.koin.compose.viewmodel.navigation)
-
             implementation(projects.core)
         }
         commonTest.dependencies {
@@ -54,6 +50,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "tech.kotlinhero.autohelper"
             packageVersion = "1.0.0"
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
         }
     }
 }

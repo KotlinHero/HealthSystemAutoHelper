@@ -1,9 +1,8 @@
 package tech.kotlinhero.autohelper.core.task
 
-import org.apache.poi.ss.usermodel.Row
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.HEALTH_SYSTEM_WEBSITE_URL
-import tech.kotlinhero.autohelper.core.excel.HypertensionVisitRecord
+import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
@@ -49,6 +48,8 @@ class HypertensionVisitImportTask(
                     }?.click()
                     xpath("//*[text() = '确定']").click()
                     css("[name*='visitDate']").sendKeys(visitRecord.visitDate)
+
+
                     useFinishCount(rowIndex)
                 }
             }
@@ -69,18 +70,6 @@ class HypertensionVisitImportTask(
         css("a[title='高血压档案管理']").click()
         allByCss("img.x-form-trigger.x-form-arrow-trigger").getOrNull(0)?.click()
         css("html > body > div:nth-of-type(8) > div > div:nth-of-type(6)").click()
-    }
-
-    private fun Row.toHypertensionVisitRecord(): HypertensionVisitRecord {
-        return HypertensionVisitRecord(
-            name = this.getCell(0).stringCellValue,
-            id = this.getCell(1).stringCellValue,
-            planDate = this.getCell(2).stringCellValue,
-            visitDate = this.getCell(3).stringCellValue,
-            visitWay = this.getCell(4).stringCellValue,
-            visitNature = this.getCell(5).stringCellValue,
-            currentSymptom = this.getCell(6).stringCellValue
-        )
     }
 
     private fun HypertensionVisitImportTaskParams.buildWebDriver(): WebDriver {
