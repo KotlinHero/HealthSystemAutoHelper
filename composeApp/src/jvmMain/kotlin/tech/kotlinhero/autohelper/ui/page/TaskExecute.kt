@@ -4,6 +4,8 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
@@ -21,24 +23,10 @@ import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 fun TaskExecute(
     taskExecuteViewModel: TaskExecuteViewModel
 ) {
-    val hasTaskExecuting by taskExecuteViewModel.hasTaskExecuting
-    if (hasTaskExecuting) {
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = "暂无任务执行",
-                    fontSize = 50.sp,
-                )
-            }
-        }
-        return
-    }
-
     val totalCount by taskExecuteViewModel.totalCount
     val finishCount by taskExecuteViewModel.finishCount
+    val taskDescription by taskExecuteViewModel.taskDescription
+    val taskLog = taskExecuteViewModel.taskLog
 
     val progress by animateFloatAsState(
         targetValue = totalCount.takeUnless { it == 0 }?.let {
@@ -53,21 +41,22 @@ fun TaskExecute(
             Card(
                 modifier = Modifier.padding(4.dp)
                     .fillMaxWidth()
-                    .height(100.dp)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.padding(8.dp)
-                    ) {
-                        Text(
-                            text = "导入高血压随访任务执行中",
-                            fontSize = 20.sp
-                        )
-                    }
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = taskDescription,
+                        fontSize = 20.sp
+                    )
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = "$finishCount / $totalCount",
+                        fontSize = 20.sp
+                    )
                     Row(
-                        modifier = Modifier.fillMaxHeight()
+                        modifier = Modifier.height(50.dp)
                     ) {
                         Box(
                             modifier = Modifier.padding(8.dp)
@@ -84,11 +73,25 @@ fun TaskExecute(
                     }
                 }
             }
+            TaskExecuteLog(taskLog)
         }
     }
 }
 
 @Composable
-fun TaskExecuteLog() {
-
+fun TaskExecuteLog(taskLog: List<String>) {
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        LazyColumn {
+            items(taskLog) { log ->
+                Text(
+                    text = log,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
+        }
+    }
 }

@@ -2,6 +2,7 @@ package tech.kotlinhero.autohelper.core.task
 
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.HEALTH_SYSTEM_WEBSITE_URL
+import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
 import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
@@ -15,9 +16,10 @@ data class HypertensionVisitImportTaskParams(
 )
 
 class HypertensionVisitImportTask(
-    private val params: HypertensionVisitImportTaskParams
-) {
-    fun execute(
+    private val params: HypertensionVisitImportTaskParams,
+    override val taskDescription: String = "导入高血压随访"
+) : IndexLogExecuteTask {
+    override suspend fun execute(
         useTotalCount: (totalCount: Int) -> Unit,
         useFinishCount: (currentCount: Int) -> Unit,
         useLog: (log: String) -> Unit

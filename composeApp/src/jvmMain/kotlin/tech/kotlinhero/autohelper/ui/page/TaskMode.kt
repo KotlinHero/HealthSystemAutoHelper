@@ -47,8 +47,9 @@ fun TaskMode(
                 modeDescription = "导入糖尿病随访",
                 onCreateClick = {
                     scope.launch {
-                        snackBarHostState.showSnackbar("正在开发")
+                        snackBarHostState.showSnackbar("导入糖尿病随访")
                     }
+                    taskExecuteViewModel.startMockTask()
                 }
             )
         }
