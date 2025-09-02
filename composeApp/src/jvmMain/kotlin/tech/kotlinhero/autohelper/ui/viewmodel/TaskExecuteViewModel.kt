@@ -48,17 +48,17 @@ class TaskExecuteViewModel : ViewModel() {
             _taskLog.clear()
             _taskDescription.value = task.taskDescription
             _hasTaskExecuting.value = true
-            task.execute(
-                useTotalCount = {
+            task.execute {
+                onTotalCountAccessible = {
                     _totalCount.value = it
-                },
-                useFinishCount = {
+                }
+                onProgressUpdate = {
                     _finishCount.value = it
-                },
-                useLog = {
+                }
+                onLogAppend = {
                     _taskLog.add(it)
                 }
-            )
+            }
             _hasTaskExecuting.value = false
         }
     }

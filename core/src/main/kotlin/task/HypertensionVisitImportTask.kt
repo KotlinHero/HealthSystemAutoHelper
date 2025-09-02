@@ -1,9 +1,14 @@
 package tech.kotlinhero.autohelper.core.task
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.openqa.selenium.WebDriver
+import tech.kotlinhero.autohelper.core.ExecuteScope
 import tech.kotlinhero.autohelper.core.HEALTH_SYSTEM_WEBSITE_URL
 import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
+import tech.kotlinhero.autohelper.core.excel.HypertensionVisitRecord
 import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
+import tech.kotlinhero.autohelper.core.healthSystemImportTask
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
@@ -19,52 +24,48 @@ class HypertensionVisitImportTask(
     private val params: HypertensionVisitImportTaskParams,
     override val taskDescription: String = "导入高血压随访"
 ) : IndexLogExecuteTask {
+
     override suspend fun execute(
-        useTotalCount: (totalCount: Int) -> Unit,
-        useFinishCount: (currentCount: Int) -> Unit,
-        useLog: (log: String) -> Unit
-    ) {
+        block: ExecuteScope.() -> Unit
+    ) = withContext(Dispatchers.Default) {
+        val executeScope = ExecuteScope().apply { block() }
         val driver = params.buildWebDriver()
 
         readExcel(params.excelPath) {
             val sheet = getSheetAt(1)
             val headRowCount = 1
-            useTotalCount(sheet.lastRowNum - headRowCount)
+            executeScope.onTotalCountAccessible(sheet.lastRowNum)
 
             driver.run {
                 prepareImport()
-
-                headRowCount.rangeTo(sheet.lastRowNum).forEach { rowIndex ->
-                    val visitRecord = sheet.getRow(rowIndex).toHypertensionVisitRecord()
-                    name("idCard") {
-                        clear()
-                        sendKeys(visitRecord.id)
-                    }
-                    css("button.x-btn-text.query").click()
-                    doubleClick {
-                        css("table[class='x-grid3-row-table']")
-                    }
-                    xpath("//*[text() = '高血压随访']").click()
-                    allByCss("td.x-grid3-col.x-grid3-cell.x-grid3-td-0.x-grid3-cell-first").find { element ->
-                        element.findElement { xpath("./div") }.text == visitRecord.planDate
-                    }?.click()
-                    xpath("//*[text() = '确定']").click()
-                    css("[name*='visitDate']").sendKeys(visitRecord.visitDate)
-
-
-                    useFinishCount(rowIndex)
+                sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
+                    importHyperVisitRecord(row.toHypertensionVisitRecord())
+                    executeScope.onProgressUpdate(rowIndex + 1)
                 }
             }
         }
     }
 
+    private fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
+        name("idCard") {
+            clear()
+            sendKeys(visitRecord.id)
+        }
+        css("button.x-btn-text.query").click()
+        doubleClick {
+            css("table[class='x-grid3-row-table']")
+        }
+        xpath("//*[text() = '高血压随访']").click()
+        allByCss("td.x-grid3-col.x-grid3-cell.x-grid3-td-0.x-grid3-cell-first").find { element ->
+            element.findElement { xpath("./div") }.text == visitRecord.planDate
+        }?.click()
+        xpath("//*[text() = '确定']").click()
+        css("[name*='visitDate']").sendKeys(visitRecord.visitDate)
+    }
+
     private fun WebDriver.prepareImport() {
         get(HEALTH_SYSTEM_WEBSITE_URL)
-        css("#ext-comp-1001").sendKeys(params.username)
-        css("#pwd").sendKeys(params.password)
-        css("#select-role").click()
-        xpath("//li[text()='责任医生']").click()
-        css("#logon").click()
+        healthSystemImportTask { loginHealthSystem(params.username, params.password) }
         css(
             "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > a"
         ).click()
