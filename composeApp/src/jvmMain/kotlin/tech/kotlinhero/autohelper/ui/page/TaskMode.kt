@@ -33,15 +33,22 @@ fun TaskMode(
                 ) {
                     UserExcelTaskStartCard(
                         onStart = { params ->
-                            taskExecuteViewModel.startHypertensionVisitImportTask(params)
+                            taskExecuteViewModel.startHypertensionVisitImportTask(params) {
+                                snackBarHostState.showSnackbar("请检查设置中浏览器配置")
+                            }
                             showHyperTaskDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("导入高血压随访")
+                            }
                         }
                     )
                 }
             }
             TaskModeItem(
                 modeDescription = "导入高血压随访",
-                onCreateClick = { showHyperTaskDialog = true }
+                onCreateClick = {
+                    showHyperTaskDialog = true
+                }
             )
             TaskModeItem(
                 modeDescription = "导入糖尿病随访",

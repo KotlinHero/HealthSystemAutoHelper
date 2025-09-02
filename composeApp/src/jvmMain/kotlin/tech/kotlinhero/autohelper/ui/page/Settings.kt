@@ -49,6 +49,7 @@ fun FilePickerTextFieldSetting(
     var textFieldValue by remember { mutableStateOf(value) }
     val filePicker = rememberFilePickerLauncher { file ->
         textFieldValue = file?.path ?: ""
+        onValueChange(textFieldValue)
     }
     Row(
         modifier = Modifier.padding(4.dp)

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
 import tech.kotlinhero.autohelper.core.settings.AppSettingsPreferences
@@ -23,6 +24,8 @@ class TaskExecuteViewModel : ViewModel() {
 
     private val _taskDescription = mutableStateOf("")
 
+    private var currentJob: Job? = null
+
     val hasTaskExecuting: State<Boolean> = _hasTaskExecuting
 
     val totalCount: State<Int> = _totalCount
@@ -33,9 +36,17 @@ class TaskExecuteViewModel : ViewModel() {
 
     val taskDescription: State<String> = _taskDescription
 
-    fun startHypertensionVisitImportTask(params: UserExcelTaskStartParams) {
+    fun cancelCurrentTask() {
+        currentJob?.cancel()
+    }
+
+    fun startHypertensionVisitImportTask(
+        params: UserExcelTaskStartParams,
+        onStartFailure: suspend (String) -> Unit = {},
+    ) {
         startIndexLogTask(
-            HypertensionVisitImportTask(params.toHypertensionVisitImportTaskParams())
+            HypertensionVisitImportTask(params.toHypertensionVisitImportTaskParams()),
+            onStartFailure
         )
     }
 
@@ -43,23 +54,36 @@ class TaskExecuteViewModel : ViewModel() {
         startIndexLogTask(MockTask())
     }
 
-    private fun startIndexLogTask(task: IndexLogExecuteTask) {
+    private fun startIndexLogTask(
+        task: IndexLogExecuteTask,
+        onStartFailure: suspend (String) -> Unit = {},
+    ) {
         viewModelScope.launch {
             _taskLog.clear()
             _taskDescription.value = task.taskDescription
             _hasTaskExecuting.value = true
-            task.execute {
-                onTotalCountAccessible = {
-                    _totalCount.value = it
+            try {
+                currentJob = launch {
+                    runCatching {
+                        task.execute {
+                            onTotalCountAccessible = {
+                                _totalCount.value = it
+                            }
+                            onProgressUpdate = {
+                                _finishCount.value = it
+                            }
+                            onLogAppend = {
+                                _taskLog.add(it)
+                            }
+                        }
+                    }.onFailure {
+                        onStartFailure(it.message ?: "请检查设置中谷歌浏览器参数")
+                    }
                 }
-                onProgressUpdate = {
-                    _finishCount.value = it
-                }
-                onLogAppend = {
-                    _taskLog.add(it)
-                }
+                currentJob?.join()
+            } finally {
+                _hasTaskExecuting.value = false
             }
-            _hasTaskExecuting.value = false
         }
     }
 }

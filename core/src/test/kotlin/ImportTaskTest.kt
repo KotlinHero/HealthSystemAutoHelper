@@ -36,7 +36,8 @@ class ImportTaskTest {
                 element.findElement { xpath("./div") }.text == "2025-10-15"
             }?.click()
             xpath("//*[text() = '确定']").click()
-            css("[name*='visitDate']").sendKeys("2025-10-15")
+            css("[name*='visitDate']").sendKeys("2025-08-29")
+            css("input[type='radio'][name^='visitWay_'][value='1']").click()
         }
     }
 }
