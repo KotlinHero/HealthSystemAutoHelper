@@ -12,6 +12,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.launch
+import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 import tech.kotlinhero.autohelper.ui.viewmodel.UserExcelTaskStartParams
 
@@ -32,10 +33,12 @@ fun TaskMode(
                     onDismissRequest = { showHyperTaskDialog = false }
                 ) {
                     UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.hyperVisitUsername,
+                        defaultPassword = AppPreferences.hyperVisitPassword,
                         onStart = { params ->
-                            taskExecuteViewModel.startHypertensionVisitImportTask(params) {
-                                snackBarHostState.showSnackbar("请检查设置中浏览器配置")
-                            }
+                            taskExecuteViewModel.startHypertensionVisitImportTask(params)
+                            AppPreferences.hyperVisitUsername = params.username
+                            AppPreferences.hyperVisitPassword = params.password
                             showHyperTaskDialog = false
                             scope.launch {
                                 snackBarHostState.showSnackbar("导入高血压随访")
@@ -66,10 +69,12 @@ fun TaskMode(
 @Composable
 fun UserExcelTaskStartCard(
     onStart: (params: UserExcelTaskStartParams) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    defaultUsername: String = "",
+    defaultPassword: String = "",
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf(defaultUsername) }
+    var password by remember { mutableStateOf(defaultPassword) }
     var excelPath by remember { mutableStateOf("") }
     var excelFilename by remember { mutableStateOf("") }
     val excelPicker = rememberFilePickerLauncher(

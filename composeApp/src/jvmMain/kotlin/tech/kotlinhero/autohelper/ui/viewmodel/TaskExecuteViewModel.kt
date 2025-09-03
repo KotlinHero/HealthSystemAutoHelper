@@ -1,52 +1,69 @@
 package tech.kotlinhero.autohelper.ui.viewmodel
 
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
-import tech.kotlinhero.autohelper.core.settings.AppSettingsPreferences
+import tech.kotlinhero.autohelper.core.TaskState
+import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTask
 import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTaskParams
 import tech.kotlinhero.autohelper.core.task.MockTask
 
 class TaskExecuteViewModel : ViewModel() {
+
+    private val _taskState = MutableStateFlow(TaskState.FINISHED)
+
+    private val _totalCount = MutableStateFlow(0)
+
+    private val _finishCount = MutableStateFlow(0)
+
+    private val _taskDescription = MutableStateFlow("")
+
+    private val _taskLog = MutableStateFlow(emptyList<String>())
+
+    val taskState = _taskState.asStateFlow()
+
+    val totalCount = _totalCount.asStateFlow()
+
+    val finishCount = _finishCount.asStateFlow()
+
+    val taskDescription = _taskDescription.asStateFlow()
+
     private val _hasTaskExecuting = mutableStateOf(false)
-
-    private val _totalCount = mutableStateOf(0)
-
-    private val _finishCount = mutableStateOf(0)
-
-    private val _taskLog = mutableStateListOf("")
-
-    private val _taskDescription = mutableStateOf("")
 
     private var currentJob: Job? = null
 
     val hasTaskExecuting: State<Boolean> = _hasTaskExecuting
 
-    val totalCount: State<Int> = _totalCount
+    val taskLog = _taskLog.asStateFlow()
 
-    val finishCount: State<Int> = _finishCount
-
-    val taskLog: List<String> = _taskLog
-
-    val taskDescription: State<String> = _taskDescription
+    private fun log(message: String) {
+        _taskLog.update { list -> list + message }
+    }
 
     fun cancelCurrentTask() {
-        currentJob?.cancel()
+        currentJob?.let {
+            if (it.isActive) {
+                it.cancel()
+                _taskState.value = TaskState.Cancelling
+                log("任务取消中")
+            }
+        }
     }
 
     fun startHypertensionVisitImportTask(
         params: UserExcelTaskStartParams,
-        onStartFailure: suspend (String) -> Unit = {},
     ) {
         startIndexLogTask(
             HypertensionVisitImportTask(params.toHypertensionVisitImportTaskParams()),
-            onStartFailure
         )
     }
 
@@ -56,33 +73,31 @@ class TaskExecuteViewModel : ViewModel() {
 
     private fun startIndexLogTask(
         task: IndexLogExecuteTask,
-        onStartFailure: suspend (String) -> Unit = {},
     ) {
         viewModelScope.launch {
-            _taskLog.clear()
             _taskDescription.value = task.taskDescription
-            _hasTaskExecuting.value = true
-            try {
-                currentJob = launch {
-                    runCatching {
-                        task.execute {
-                            onTotalCountAccessible = {
-                                _totalCount.value = it
-                            }
-                            onProgressUpdate = {
-                                _finishCount.value = it
-                            }
-                            onLogAppend = {
-                                _taskLog.add(it)
-                            }
+            _taskState.value = TaskState.Running
+            _taskLog.update { emptyList() }
+            currentJob = launch {
+                try {
+                    task.execute {
+                        onTotalCountAccessible = {
+                            _totalCount.value = it
                         }
-                    }.onFailure {
-                        onStartFailure(it.message ?: "请检查设置中谷歌浏览器参数")
+                        onProgressUpdate = {
+                            _finishCount.value = it
+                        }
+                        onLogAppend = { message ->
+                            log(message)
+                        }
                     }
+                } catch (_: CancellationException) {
+                    log("任务已取消")
+                } catch (_: Exception) {
+                    log("任务启动失败")
+                } finally {
+                    _taskState.value = TaskState.FINISHED
                 }
-                currentJob?.join()
-            } finally {
-                _hasTaskExecuting.value = false
             }
         }
     }
@@ -99,7 +114,7 @@ fun UserExcelTaskStartParams.toHypertensionVisitImportTaskParams(): Hypertension
         username = username,
         password = password,
         excelPath = excelPath,
-        browserBinaryPath = AppSettingsPreferences.chromeBinaryPath,
-        driverPath = AppSettingsPreferences.chromeDriverPath
+        browserBinaryPath = AppPreferences.chromeBinaryPath,
+        driverPath = AppPreferences.chromeDriverPath
     )
 }

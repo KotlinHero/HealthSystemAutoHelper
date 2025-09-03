@@ -31,6 +31,8 @@ data class HypertensionVisitRecord(
     val obeyDoctor: ObeyDoctor,
     val medicine: Medicine,
     val visitEvaluate: VisitEvaluate,
+    val referralReason: String,
+    val agencyAndDept: String,
     val needDoubleVisit: NeedDoubleVisit
 )
 
@@ -63,7 +65,9 @@ internal fun Row.toHypertensionVisitRecord(): HypertensionVisitRecord {
         obeyDoctor = ObeyDoctor(this[35]),
         medicine = Medicine(this[37]),
         visitEvaluate = VisitEvaluate(this[38]),
-        needDoubleVisit = NeedDoubleVisit(this[42])
+        referralReason = this[40],
+        agencyAndDept = this[41],
+        needDoubleVisit = NeedDoubleVisit(this[42]),
     )
 }
 

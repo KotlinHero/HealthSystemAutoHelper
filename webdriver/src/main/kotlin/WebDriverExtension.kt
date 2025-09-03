@@ -68,3 +68,9 @@ fun WebDriver.name(name: String) = findElement { name(name) }
 fun WebDriver.name(name: String, block: WebElement.() -> Unit) {
     name(name).block()
 }
+
+@WebDriverDSL
+fun WebElement.clearSendKeys(keys: String) {
+    clear()
+    sendKeys(keys)
+}

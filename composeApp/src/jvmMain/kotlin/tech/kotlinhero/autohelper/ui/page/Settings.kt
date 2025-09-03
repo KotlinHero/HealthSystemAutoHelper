@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
+import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.settings.AppSettings
-import tech.kotlinhero.autohelper.core.settings.AppSettingsPreferences
 
 @Composable
 fun Settings() {
@@ -76,20 +76,20 @@ fun FilePickerTextFieldSetting(
 }
 
 class AppSettingsState : AppSettings {
-    private var chromeBinaryPathState by mutableStateOf(AppSettingsPreferences.chromeBinaryPath)
-    private var chromeDriverPathState by mutableStateOf(AppSettingsPreferences.chromeDriverPath)
+    private var chromeBinaryPathState by mutableStateOf(AppPreferences.chromeBinaryPath)
+    private var chromeDriverPathState by mutableStateOf(AppPreferences.chromeDriverPath)
 
     override var chromeBinaryPath: String
         get() = chromeBinaryPathState
         set(value) {
             chromeBinaryPathState = value
-            AppSettingsPreferences.chromeBinaryPath = value
+            AppPreferences.chromeBinaryPath = value
         }
 
     override var chromeDriverPath: String
         get() = chromeDriverPathState
         set(value) {
             chromeDriverPathState = value
-            AppSettingsPreferences.chromeDriverPath = value
+            AppPreferences.chromeDriverPath = value
         }
 }

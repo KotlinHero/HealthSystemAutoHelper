@@ -16,7 +16,13 @@ private fun Row.getDisplayString(zeroBasedColumn: Int): String {
             if (DateUtil.isCellDateFormatted(cell)) {
                 dataFormatter.formatCellValue(cell)
             } else {
-                cell.numericCellValue.toString()
+                cell.numericCellValue.let {
+                    if (it % 1 == 0.0) {
+                        it.toInt().toString()
+                    } else {
+                        it.toString()
+                    }
+                }
             }
         }
 

@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.ui.page.Settings
 import tech.kotlinhero.autohelper.ui.page.TaskExecute
 import tech.kotlinhero.autohelper.ui.page.TaskHistory
@@ -29,7 +30,7 @@ fun App(
 ) {
     val navController = rememberNavController()
     var currentPage: RouterItem by remember { mutableStateOf(NavigationRouter.TaskMode) }
-    val hasTaskRunning by taskExecuteViewModel.hasTaskExecuting
+    val taskState by taskExecuteViewModel.taskState.collectAsState()
     DynamicConfigTheme {
         Row {
             NavigationRail(
@@ -65,14 +66,14 @@ fun App(
                                 navController.navigate(TaskExecuteRouterItem.route)
                             },
                     ) {
-                        if (hasTaskRunning) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        } else {
+                        if (taskState == TaskState.FINISHED) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 progress = { 1f }
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
                             )
                         }
                     }

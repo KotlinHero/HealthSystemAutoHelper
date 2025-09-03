@@ -1,7 +1,7 @@
 package tech.kotlinhero.autohelper.core.task
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.ExecuteScope
@@ -29,7 +29,6 @@ class HypertensionVisitImportTask(
     override suspend fun execute(
         block: ExecuteScope.() -> Unit
     ) = withContext(Dispatchers.Default) {
-        println("start")
         val executeScope = ExecuteScope().apply { block() }
         val driver = params.buildWebDriver()
         readExcel(params.excelPath) {
@@ -38,37 +37,33 @@ class HypertensionVisitImportTask(
             executeScope.onTotalCountAccessible(sheet.lastRowNum)
 
             driver.run {
+                executeScope.onLogAppend("正在登录系统准备导入")
                 prepareImport()
                 sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
-                    if (!isActive) {
-                        return@readExcel
-                    }
+                    ensureActive()
                     val visitRecord = row.toHypertensionVisitRecord()
-                    executeScope.onLogAppend("开始导入：${visitRecord.name}-${visitRecord.id}")
-                    println(visitRecord)
+                    val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
+                    executeScope.onLogAppend("开始导入：$currentDataIdentifier")
                     runCatching {
                         importHyperVisitRecord(visitRecord)
                     }.fold(
                         onSuccess = {
-                            executeScope.onLogAppend("导入成功：${visitRecord.name}-${visitRecord.id}")
+                            executeScope.onLogAppend("导入成功：$currentDataIdentifier")
+                            executeScope.onProgressUpdate(rowIndex + 1)
                         },
                         onFailure = {
-                            executeScope.onLogAppend("导入失败：${visitRecord.name}-${visitRecord.id}")
-                            executeScope.onLogAppend("失败原因：${it.message}")
+                            executeScope.onLogAppend("导入失败：$currentDataIdentifier")
+                            executeScope.onProgressUpdate(rowIndex + 1)
                             prepareImport()
                         }
                     )
-                    executeScope.onProgressUpdate(rowIndex + 1)
                 }
             }
         }
     }
 
     private fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
-        name("idCard") {
-            clear()
-            sendKeys(visitRecord.id)
-        }
+        name("idCard").clearSendKeys(visitRecord.id)
         css("button.x-btn-text.query").click()
         doubleClick {
             css("table[class='x-grid3-row-table']")
@@ -78,31 +73,31 @@ class HypertensionVisitImportTask(
             element.findElement { xpath("./div") }.text == visitRecord.planDate
         }?.click()
         xpath("//*[text() = '确定']").click()
-        css("[name*='visitDate']").sendKeys(visitRecord.visitDate)
+        css("[name*='visitDate']").clearSendKeys(visitRecord.visitDate)
         css("input[type='radio'][name^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
         css("div[id^='div_sfxz'] > div > img").click()
         xpath("//*[text() = '${visitRecord.visitNature}']").click()
-        css("input[type='radio'][name^='visitEffect_'][value='']").click()
+        css("input[type='radio'][name^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][name^='currentSymptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
         ).click()
-        css("input[id^='constriction_']").sendKeys(visitRecord.constriction)
-        css("input[id^='diastolic_']").sendKeys(visitRecord.diastolic)
-        css("input[id^='weight_']").sendKeys(visitRecord.weight)
+        css("input[id^='constriction_']").clearSendKeys(visitRecord.constriction)
+        css("input[id^='diastolic_']").clearSendKeys(visitRecord.diastolic)
+        css("input[id^='weight_']").clearSendKeys(visitRecord.weight)
         css("input[id^='targetWeight_']") {
             clear()
-            sendKeys(visitRecord.targetWeight)
+            clearSendKeys(visitRecord.targetWeight)
         }
-        css("input[id^='heartRate_']").sendKeys(visitRecord.heartRate)
-        css("input[id^='otherSigns_']").sendKeys(visitRecord.otherSigns)
-        css("input[id^='smokeCount_']").sendKeys(visitRecord.smokeCount)
-        css("input[id^='targetSmokeCount_']").sendKeys(visitRecord.targetSmokeCount)
-        css("input[id^='drinkCount_']").sendKeys(visitRecord.drinkCount)
-        css("input[id^='targetDrinkCount_']").sendKeys(visitRecord.targetDrinkCount)
-        css("input[id^='trainTimesWeek_']").sendKeys(visitRecord.trainTimesWeek)
-        css("input[id^='trainMinute_']").sendKeys(visitRecord.trainMinute)
-        css("input[id^='targetTrainTimesWeek_']").sendKeys(visitRecord.targetTrainTimesWeek)
-        css("input[id^='targetTrainMinute_']").sendKeys(visitRecord.targetTrainMinute)
+        css("input[id^='heartRate_']").clearSendKeys(visitRecord.heartRate)
+        css("input[id^='otherSigns_']").clearSendKeys(visitRecord.otherSigns)
+        css("input[id^='smokeCount_']").clearSendKeys(visitRecord.smokeCount)
+        css("input[id^='targetSmokeCount_']").clearSendKeys(visitRecord.targetSmokeCount)
+        css("input[id^='drinkCount_']").clearSendKeys(visitRecord.drinkCount)
+        css("input[id^='targetDrinkCount_']").clearSendKeys(visitRecord.targetDrinkCount)
+        css("input[id^='trainTimesWeek_']").clearSendKeys(visitRecord.trainTimesWeek)
+        css("input[id^='trainMinute_']").clearSendKeys(visitRecord.trainMinute)
+        css("input[id^='targetTrainTimesWeek_']").clearSendKeys(visitRecord.targetTrainTimesWeek)
+        css("input[id^='targetTrainMinute_']").clearSendKeys(visitRecord.targetTrainMinute)
         css("input[type='radio'][name^='salt_'][value='${visitRecord.salt.toOption()}']").click()
         css("input[type='radio'][name^='targetSalt_'][value='${visitRecord.targetSalt.toOption()}']").click()
         css(
@@ -112,7 +107,18 @@ class HypertensionVisitImportTask(
         css("input[type='radio'][name^='medicine_'][value='${visitRecord.medicine.toOption()}']").click()
         css("input[type='radio'][name^='visitEvaluate_'][value='${visitRecord.visitEvaluate.toOption()}']").click()
         css("input[type='radio'][name^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
-        css("button[id='CLOSE']").click()
+        visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
+            css("div[id^='div_referralReason_'] > div > img").click()
+            xpath("//*[text() = '连续两次出现血压控制不满意']").click()
+        }
+        visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
+            css("div[id^='div_agencyAndDept_'] > div > img").click()
+            xpath("//*[text() = '界牌镇中心卫生院慢病门诊']").click()
+        }
+        xpath("//button[text() = '确定(F1)']").click()
+        if (xpath("//button[text() = '服药情况添加(F1)']").isDisplayed) {
+            css("button[id='CLOSE']").click()
+        }
     }
 
     private fun WebDriver.prepareImport() {

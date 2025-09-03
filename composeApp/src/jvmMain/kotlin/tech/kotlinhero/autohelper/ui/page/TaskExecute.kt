@@ -12,6 +12,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,10 +25,11 @@ import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 fun TaskExecute(
     taskExecuteViewModel: TaskExecuteViewModel
 ) {
-    val totalCount by taskExecuteViewModel.totalCount
-    val finishCount by taskExecuteViewModel.finishCount
-    val taskDescription by taskExecuteViewModel.taskDescription
-    val taskLog = taskExecuteViewModel.taskLog
+    val totalCount by taskExecuteViewModel.totalCount.collectAsState()
+    val finishCount by taskExecuteViewModel.finishCount.collectAsState()
+    val taskDescription by taskExecuteViewModel.taskDescription.collectAsState()
+    val taskLog by taskExecuteViewModel.taskLog.collectAsState()
+    val taskState by taskExecuteViewModel.taskState.collectAsState()
 
     val progress by animateFloatAsState(
         targetValue = totalCount.takeUnless { it == 0 }?.let {
@@ -55,7 +57,7 @@ fun TaskExecute(
                     }
                     Text(
                         modifier = Modifier.padding(8.dp),
-                        text = taskDescription,
+                        text = "$taskDescription ${taskState.description}",
                         fontSize = 20.sp
                     )
                     Text(
