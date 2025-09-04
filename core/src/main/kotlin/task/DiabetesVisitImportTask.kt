@@ -18,32 +18,36 @@ class DiabetesVisitImportTask(
 
     override fun execute(): Flow<TaskProgress> = flow {
         val driver = params.buildWebDriver()
-        readExcel(params.excelPath) {
-            val sheet = getSheetAt(2)
-            val headRowCount = 1
-            totalCount(sheet.lastRowNum)
-            driver.run {
-                log("正在登录系统准备导入")
-                prepareImport()
-                sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
-                    val visitRecord = row.toDiabetesVisitRecord()
-                    val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
-                    log("开始导入：$currentDataIdentifier")
-                    runCatching {
-                        importDiabetesVisitRecord(visitRecord)
-                    }.fold(
-                        onSuccess = {
-                            log("导入成功：$currentDataIdentifier")
-                            progressUpdate(rowIndex + 1)
-                        },
-                        onFailure = {
-                            log("导入失败：$currentDataIdentifier")
-                            progressUpdate(rowIndex + 1)
-                            prepareImport()
-                        }
-                    )
+        try {
+            readExcel(params.excelPath) {
+                val sheet = getSheetAt(2)
+                val headRowCount = 1
+                totalCount(sheet.lastRowNum)
+                driver.run {
+                    log("正在登录系统准备导入")
+                    prepareImport()
+                    sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
+                        val visitRecord = row.toDiabetesVisitRecord()
+                        val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
+                        log("开始导入：$currentDataIdentifier")
+                        runCatching {
+                            importDiabetesVisitRecord(visitRecord)
+                        }.fold(
+                            onSuccess = {
+                                log("导入成功：$currentDataIdentifier")
+                                progressUpdate(rowIndex + 1)
+                            },
+                            onFailure = {
+                                log("导入失败：$currentDataIdentifier")
+                                progressUpdate(rowIndex + 1)
+                                prepareImport()
+                            }
+                        )
+                    }
                 }
+                driver.quit()
             }
+        } finally {
             driver.quit()
         }
     }.flowOn(Dispatchers.Default)
