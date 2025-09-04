@@ -1,12 +1,18 @@
 package tech.kotlinhero.autohelper.core
 
 import org.openqa.selenium.WebDriver
+import tech.kotlinhero.autohelper.core.config.AppPreferences
+import tech.kotlinhero.autohelper.core.config.HealthSystemWebsiteConfig
 import tech.kotlinhero.autohelper.webdriver.css
 import tech.kotlinhero.autohelper.webdriver.xpath
 
 interface HealthSystemImportTask {
-    fun WebDriver.loginHealthSystem(username: String, password: String) {
-        get(HEALTH_SYSTEM_WEBSITE_URL)
+    fun WebDriver.loginHealthSystem(
+        username: String,
+        password: String,
+        config: HealthSystemWebsiteConfig = AppPreferences
+    ) {
+        get(config.healthSystemWebsiteUrl)
         css("#ext-comp-1001").sendKeys(username)
         css("#pwd").sendKeys(password)
         css("#select-role").click()
@@ -17,6 +23,6 @@ interface HealthSystemImportTask {
 
 internal class HealthSystemImportTaskInstance : HealthSystemImportTask
 
-fun healthSystemImportTask(block: HealthSystemImportTask.() -> Unit) {
+internal fun healthSystemImportTask(block: HealthSystemImportTask.() -> Unit) {
     HealthSystemImportTaskInstance().block()
 }

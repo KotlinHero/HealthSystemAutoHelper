@@ -3,7 +3,7 @@ package tech.kotlinhero.autohelper.core
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 
-interface IndexLogExecuteTask {
+interface ProgressLogTask {
     val taskDescription: String
 
     fun execute(): Flow<TaskProgress>

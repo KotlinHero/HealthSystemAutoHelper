@@ -1,15 +1,14 @@
 package tech.kotlinhero.autohelper.core.config
 
-import tech.kotlinhero.autohelper.core.settings.AppSettings
 import java.util.prefs.Preferences
 
-interface HyperVisitParamsPreferences {
-    var hyperVisitUsername: String
-    var hyperVisitPassword: String
-}
+object AppPreferences : AppSettings, HyperVisitParamsCache {
 
-object AppPreferences : AppSettings, HyperVisitParamsPreferences {
     private val preferences = Preferences.userNodeForPackage(AppSettings::class.java)
+
+    override var healthSystemWebsiteUrl: String
+        get() = preferences.get("health_system_website_url", HEALTH_SYSTEM_WEBSITE_URL)
+        set(value) = preferences.put("health_system_website_url", value)
 
     override var hyperVisitUsername: String
         get() = preferences.get("hyper_visit_username", "")

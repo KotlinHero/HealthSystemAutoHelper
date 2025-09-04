@@ -15,7 +15,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.ui.page.Settings
 import tech.kotlinhero.autohelper.ui.page.TaskExecute
-import tech.kotlinhero.autohelper.ui.page.TaskHistory
 import tech.kotlinhero.autohelper.ui.page.TaskMode
 import tech.kotlinhero.autohelper.ui.route.NavigationRouter
 import tech.kotlinhero.autohelper.ui.route.RouterItem
@@ -82,9 +81,6 @@ fun App(
             NavHost(navController, startDestination = NavigationRouter.TaskMode.route) {
                 composable(NavigationRouter.TaskMode.route) {
                     TaskMode(taskExecuteViewModel)
-                }
-                composable(NavigationRouter.TaskHistory.route) {
-                    TaskHistory()
                 }
                 composable(NavigationRouter.Settings.route) {
                     Settings()

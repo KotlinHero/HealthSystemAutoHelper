@@ -1,4 +1,4 @@
-import tech.kotlinhero.autohelper.core.HEALTH_SYSTEM_WEBSITE_URL
+import tech.kotlinhero.autohelper.core.config.HEALTH_SYSTEM_WEBSITE_URL
 import tech.kotlinhero.autohelper.webdriver.*
 import kotlin.test.Test
 

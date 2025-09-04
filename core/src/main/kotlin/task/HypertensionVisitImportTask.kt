@@ -11,17 +11,9 @@ import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
-data class HypertensionVisitImportTaskParams(
-    val username: String,
-    val password: String,
-    val excelPath: String,
-    val browserBinaryPath: String,
-    val driverPath: String
-)
-
 class HypertensionVisitImportTask(
     private val params: HypertensionVisitImportTaskParams
-) : IndexLogExecuteTask {
+) : ProgressLogTask {
 
     override val taskDescription: String = "导入高血压随访"
 
@@ -110,14 +102,14 @@ class HypertensionVisitImportTask(
             css("div[id^='div_agencyAndDept_'] > div > img").click()
             xpath("//*[text() = '界牌镇中心卫生院慢病门诊']").click()
         }
-        xpath("//button[text() = '确定(F1)']").click()
-        if (xpath("//button[text() = '服药情况添加(F1)']").isDisplayed) {
-            css("button[id='CLOSE']").click()
-        }
+        findElements {
+            xpath("//*[text() = '确定(F1)']")
+        }[1].click()
+        xpath("//*[text() = '确定']").click()
+        css("button[id='CLOSE']").click()
     }
 
     private fun WebDriver.prepareImport() {
-        get(HEALTH_SYSTEM_WEBSITE_URL)
         healthSystemImportTask { loginHealthSystem(params.username, params.password) }
         css(
             "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > a"
@@ -138,3 +130,11 @@ class HypertensionVisitImportTask(
         }
     }
 }
+
+data class HypertensionVisitImportTaskParams(
+    val username: String,
+    val password: String,
+    val excelPath: String,
+    val browserBinaryPath: String,
+    val driverPath: String
+)

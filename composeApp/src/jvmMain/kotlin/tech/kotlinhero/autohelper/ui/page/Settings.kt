@@ -1,9 +1,6 @@
 package tech.kotlinhero.autohelper.ui.page
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -16,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
 import tech.kotlinhero.autohelper.core.config.AppPreferences
-import tech.kotlinhero.autohelper.core.settings.AppSettings
+import tech.kotlinhero.autohelper.core.config.AppSettings
 
 @Composable
 fun Settings() {
@@ -26,6 +23,14 @@ fun Settings() {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                value = appSettings.healthSystemWebsiteUrl,
+                onValueChange = { appSettings.healthSystemWebsiteUrl = it },
+                label = { Text("卫生健康信息系统网址") }
+            )
             FilePickerTextFieldSetting(
                 value = appSettings.chromeBinaryPath,
                 onValueChange = { appSettings.chromeBinaryPath = it },
@@ -36,6 +41,7 @@ fun Settings() {
                 onValueChange = { appSettings.chromeDriverPath = it },
                 label = "谷歌浏览器驱动文件"
             )
+
         }
     }
 }
@@ -78,6 +84,14 @@ fun FilePickerTextFieldSetting(
 class AppSettingsState : AppSettings {
     private var chromeBinaryPathState by mutableStateOf(AppPreferences.chromeBinaryPath)
     private var chromeDriverPathState by mutableStateOf(AppPreferences.chromeDriverPath)
+    private var healthSystemWebsiteUrlState by mutableStateOf(AppPreferences.healthSystemWebsiteUrl)
+
+    override var healthSystemWebsiteUrl: String
+        get() = healthSystemWebsiteUrlState
+        set(value) {
+            healthSystemWebsiteUrlState = value
+            AppPreferences.healthSystemWebsiteUrl = value
+        }
 
     override var chromeBinaryPath: String
         get() = chromeBinaryPathState

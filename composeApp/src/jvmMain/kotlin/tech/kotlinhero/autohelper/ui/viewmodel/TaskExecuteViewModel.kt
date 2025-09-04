@@ -1,7 +1,5 @@
 package tech.kotlinhero.autohelper.ui.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
@@ -10,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
+import tech.kotlinhero.autohelper.core.ProgressLogTask
 import tech.kotlinhero.autohelper.core.TaskProgress
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.core.config.AppPreferences
@@ -68,7 +66,7 @@ class TaskExecuteViewModel : ViewModel() {
     }
 
     private fun startIndexLogTask(
-        task: IndexLogExecuteTask,
+        task: ProgressLogTask,
     ) {
         viewModelScope.launch {
             _taskDescription.value = task.taskDescription
@@ -85,6 +83,8 @@ class TaskExecuteViewModel : ViewModel() {
                     }
                 } catch (_: CancellationException) {
                     log("任务已取消")
+                } catch (_: Exception) {
+                    log("任务启动失败")
                 } finally {
                     _taskState.value = TaskState.FINISHED
                 }
