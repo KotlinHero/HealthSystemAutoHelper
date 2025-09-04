@@ -112,7 +112,9 @@ class HypertensionVisitImportTask(
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        xpath("//*[text() = '确定']").click()
+        runCatching {
+            xpath("//*[text() = '确定']").click()
+        }
         css("button[id='CLOSE']").click()
     }
 

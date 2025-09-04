@@ -95,6 +95,7 @@ class DiabetesVisitImportTask(
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
             css("div[id^='div_referralReason_'] > div > img").click()
             xpath("//*[text() = '连续两次出现空腹血糖控制不满意']").click()
+            css("div[id^='div_referralReason_'] > div > img").click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
             css("div[id^='div_agencyAndDept_'] > div > img").click()
@@ -103,7 +104,11 @@ class DiabetesVisitImportTask(
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        xpath("//*[text() = '取消(F2)']").click()
+        Thread.sleep(300)
+        runCatching {
+            xpath("//*[text() = '取消(F2)']").click()
+        }
+        Thread.sleep(300)
         css("button[id='CLOSE']").click()
     }
 

@@ -18,7 +18,6 @@ changelog {
     version = projectVersion
     path = file("CHANGELOG.md").canonicalPath
     header = provider { "[${version.get()}] - ${date()}" }
-    headerParserRegex = """(\d+\.\d+)""".toRegex()
     introduction =
         """
         My awesome project that provides a lot of useful features, like:

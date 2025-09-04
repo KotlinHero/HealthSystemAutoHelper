@@ -1,0 +1,46 @@
+# Changelog
+
+My awesome project that provides a lot of useful features, like:
+
+- Feature 1
+- Feature 2
+- and Feature 3
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.0.3] - 2025-09-04
+
+### Fixed
+
+- 修复糖尿病随访点击确定保存时因为服药不同导致弹窗行为不同的导入异常
+
+## 1.0.2 - 2025-09-04
+
+### Fixed
+
+- 修复高血压随访点击确定保存时可能无确定按钮导致的导入异常
+
+## 1.0.1 - 2025-09-04
+
+### Fixed
+
+- 修复高血压随访点击计划日期数据时可能无确定按钮导致的导入异常
+
+## 1.0.0 - 2025-09-04
+
+### Added
+
+- 新增高血压随访导入功能
+- 新增糖尿病随访导入功能

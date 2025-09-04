@@ -16,7 +16,7 @@ fun webDriver(block: WebDriverBuilder.() -> Unit): WebDriver = DefaultWebDriverB
 
 @WebDriverDSL
 fun WebDriver.findElement(block: FindElementConditionBuilder.() -> By): WebElement {
-    return WebDriverWait(this, Duration.ofSeconds(5)).until(
+    return WebDriverWait(this, Duration.ofSeconds(3)).until(
         ExpectedConditions.elementToBeClickable(
             DefaultFindElementConditionBuilder().block()
         )
