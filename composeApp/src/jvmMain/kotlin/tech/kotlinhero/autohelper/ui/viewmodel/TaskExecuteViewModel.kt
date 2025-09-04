@@ -12,8 +12,9 @@ import tech.kotlinhero.autohelper.core.ProgressLogTask
 import tech.kotlinhero.autohelper.core.TaskProgress
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.core.config.AppPreferences
+import tech.kotlinhero.autohelper.core.importTaskParam
+import tech.kotlinhero.autohelper.core.task.DiabetesVisitImportTask
 import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTask
-import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTaskParams
 
 class TaskExecuteViewModel : ViewModel() {
 
@@ -57,12 +58,32 @@ class TaskExecuteViewModel : ViewModel() {
         params: UserExcelTaskStartParams,
     ) {
         startIndexLogTask(
-            HypertensionVisitImportTask(params.toHypertensionVisitImportTaskParams()),
+            HypertensionVisitImportTask(
+                importTaskParam(
+                    AppPreferences.chromeBinaryPath,
+                    AppPreferences.chromeDriverPath,
+                    params.username,
+                    params.password,
+                    params.excelPath
+                )
+            ),
         )
     }
 
-    fun startMockTask() {
-
+    fun startDiabetesVisitImportTask(
+        params: UserExcelTaskStartParams,
+    ) {
+        startIndexLogTask(
+            DiabetesVisitImportTask(
+                importTaskParam(
+                    AppPreferences.chromeBinaryPath,
+                    AppPreferences.chromeDriverPath,
+                    params.username,
+                    params.password,
+                    params.excelPath
+                )
+            ),
+        )
     }
 
     private fun startIndexLogTask(
@@ -85,7 +106,7 @@ class TaskExecuteViewModel : ViewModel() {
                     log("任务已取消")
                 } catch (_: Exception) {
                     log("任务启动失败")
-                } finally {
+                }  finally {
                     _taskState.value = TaskState.FINISHED
                 }
             }
@@ -98,13 +119,3 @@ data class UserExcelTaskStartParams(
     val password: String,
     val excelPath: String
 )
-
-fun UserExcelTaskStartParams.toHypertensionVisitImportTaskParams(): HypertensionVisitImportTaskParams {
-    return HypertensionVisitImportTaskParams(
-        username = username,
-        password = password,
-        excelPath = excelPath,
-        browserBinaryPath = AppPreferences.chromeBinaryPath,
-        driverPath = AppPreferences.chromeDriverPath
-    )
-}

@@ -8,7 +8,7 @@ data class HypertensionVisitRecord(
     val id: String,
     val planDate: String,
     val visitDate: String,
-    val visitWay: VisitWay,
+    val visitWay: HyperVisitWay,
     val visitNature: String,
     val currentSymptom: CurrentSymptom,
     val constriction: String,
@@ -42,7 +42,7 @@ internal fun Row.toHypertensionVisitRecord(): HypertensionVisitRecord {
         id = this[2],
         planDate = this[11],
         visitDate = this[12],
-        visitWay = VisitWay(this[13]),
+        visitWay = HyperVisitWay(this[13]),
         visitNature = this[14],
         currentSymptom = CurrentSymptom(this[15]),
         constriction = this[16],
@@ -131,7 +131,7 @@ value class Salt(val value: String) {
 }
 
 @JvmInline
-value class VisitWay(val value: String) {
+value class HyperVisitWay(val value: String) {
     fun toOption(): Int = when (value) {
         "门诊随访" -> 1
         "家庭随访" -> 2

@@ -47,6 +47,26 @@ fun TaskMode(
                     )
                 }
             }
+            var showDiabetesTaskDialog by remember { mutableStateOf(false) }
+            if (showDiabetesTaskDialog) {
+                Dialog(
+                    onDismissRequest = { showDiabetesTaskDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.diabetesUsername,
+                        defaultPassword = AppPreferences.diabetesPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startDiabetesVisitImportTask(params)
+                            AppPreferences.diabetesUsername = params.username
+                            AppPreferences.diabetesPassword = params.password
+                            showDiabetesTaskDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("导入糖尿病随访")
+                            }
+                        }
+                    )
+                }
+            }
             TaskModeItem(
                 modeDescription = "导入高血压随访",
                 onCreateClick = {
@@ -56,10 +76,7 @@ fun TaskMode(
             TaskModeItem(
                 modeDescription = "导入糖尿病随访",
                 onCreateClick = {
-                    scope.launch {
-                        snackBarHostState.showSnackbar("导入糖尿病随访")
-                    }
-                    taskExecuteViewModel.startMockTask()
+                    showDiabetesTaskDialog = true
                 }
             )
         }

@@ -12,7 +12,7 @@ import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
 class HypertensionVisitImportTask(
-    private val params: HypertensionVisitImportTaskParams
+    private val params: ImportTaskParam
 ) : ProgressLogTask {
 
     override val taskDescription: String = "导入高血压随访"
@@ -119,22 +119,4 @@ class HypertensionVisitImportTask(
         allByCss("img.x-form-trigger.x-form-arrow-trigger").getOrNull(0)?.click()
         css("html > body > div:nth-of-type(8) > div > div:nth-of-type(6)").click()
     }
-
-    private fun HypertensionVisitImportTaskParams.buildWebDriver(): WebDriver {
-        return webDriver {
-            chrome {
-                driver(driverPath)
-                binary(browserBinaryPath)
-                silent()
-            }
-        }
-    }
 }
-
-data class HypertensionVisitImportTaskParams(
-    val username: String,
-    val password: String,
-    val excelPath: String,
-    val browserBinaryPath: String,
-    val driverPath: String
-)

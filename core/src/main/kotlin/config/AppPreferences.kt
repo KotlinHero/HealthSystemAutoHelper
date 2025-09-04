@@ -2,9 +2,17 @@ package tech.kotlinhero.autohelper.core.config
 
 import java.util.prefs.Preferences
 
-object AppPreferences : AppSettings, HyperVisitParamsCache {
+object AppPreferences : AppSettings, HyperVisitParamsCache, DiabetesParamsCache {
 
     private val preferences = Preferences.userNodeForPackage(AppSettings::class.java)
+
+    override var diabetesUsername: String
+        get() = preferences.get("diabetes_visit_username", "")
+        set(value) = preferences.put("diabetes_visit_username", value)
+
+    override var diabetesPassword: String
+        get() = preferences.get("diabetes_visit_password", "")
+        set(value) = preferences.put("diabetes_visit_password", value)
 
     override var healthSystemWebsiteUrl: String
         get() = preferences.get("health_system_website_url", HEALTH_SYSTEM_WEBSITE_URL)
