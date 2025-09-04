@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import java.io.FileInputStream
 
-fun readExcel(path: String, block: Workbook.() -> Unit) {
+inline fun readExcel(path: String, block: Workbook.() -> Unit) {
     FileInputStream(path).use { inputStream ->
         WorkbookFactory.create(inputStream).use { workbook ->
             block(workbook)

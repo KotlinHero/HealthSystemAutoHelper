@@ -1,15 +1,28 @@
 package tech.kotlinhero.autohelper.core
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+
 interface IndexLogExecuteTask {
     val taskDescription: String
 
-    suspend fun execute(block: ExecuteScope.() -> Unit)
+    fun execute(): Flow<TaskProgress>
 }
 
-class ExecuteScope {
-    var onTotalCountAccessible: (Int) -> Unit = {}
+sealed interface TaskProgress {
+    data class TotalCount(val value: Int) : TaskProgress
+    data class ProgressUpdate(val value: Int) : TaskProgress
+    data class Log(val value: String) : TaskProgress
+}
 
-    var onProgressUpdate: (Int) -> Unit = {}
+suspend fun FlowCollector<TaskProgress>.totalCount(count: Int) {
+    emit(TaskProgress.TotalCount(count))
+}
 
-    var onLogAppend: (String) -> Unit = {}
+suspend fun FlowCollector<TaskProgress>.progressUpdate(count: Int) {
+    emit(TaskProgress.ProgressUpdate(count))
+}
+
+suspend fun FlowCollector<TaskProgress>.log(log: String) {
+    emit(TaskProgress.Log(log))
 }

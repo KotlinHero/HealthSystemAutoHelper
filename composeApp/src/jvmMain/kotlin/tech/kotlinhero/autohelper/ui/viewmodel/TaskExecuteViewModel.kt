@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
+import tech.kotlinhero.autohelper.core.TaskProgress
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTask
 import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTaskParams
-import tech.kotlinhero.autohelper.core.task.MockTask
 
 class TaskExecuteViewModel : ViewModel() {
 
@@ -37,11 +37,7 @@ class TaskExecuteViewModel : ViewModel() {
 
     val taskDescription = _taskDescription.asStateFlow()
 
-    private val _hasTaskExecuting = mutableStateOf(false)
-
     private var currentJob: Job? = null
-
-    val hasTaskExecuting: State<Boolean> = _hasTaskExecuting
 
     val taskLog = _taskLog.asStateFlow()
 
@@ -68,7 +64,7 @@ class TaskExecuteViewModel : ViewModel() {
     }
 
     fun startMockTask() {
-        startIndexLogTask(MockTask())
+
     }
 
     private fun startIndexLogTask(
@@ -80,21 +76,15 @@ class TaskExecuteViewModel : ViewModel() {
             _taskLog.update { emptyList() }
             currentJob = launch {
                 try {
-                    task.execute {
-                        onTotalCountAccessible = {
-                            _totalCount.value = it
-                        }
-                        onProgressUpdate = {
-                            _finishCount.value = it
-                        }
-                        onLogAppend = { message ->
-                            log(message)
+                    task.execute().collect {
+                        when (it) {
+                            is TaskProgress.TotalCount -> _totalCount.value = it.value
+                            is TaskProgress.ProgressUpdate -> _finishCount.value = it.value
+                            is TaskProgress.Log -> log(it.value)
                         }
                     }
                 } catch (_: CancellationException) {
                     log("任务已取消")
-                } catch (_: Exception) {
-                    log("任务启动失败")
                 } finally {
                     _taskState.value = TaskState.FINISHED
                 }

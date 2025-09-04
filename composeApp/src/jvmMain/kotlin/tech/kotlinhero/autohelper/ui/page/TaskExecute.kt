@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 
 @Composable
@@ -48,18 +49,30 @@ fun TaskExecute(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            taskExecuteViewModel.cancelCurrentTask()
+                    Row {
+                        Text(
+                            modifier = Modifier.padding(8.dp)
+                                .align(Alignment.CenterVertically),
+                            text = "$taskDescription${taskState.description}",
+                            fontSize = 20.sp
+                        )
+                        if (taskState == TaskState.Running) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(8.dp)
+                            ) {
+                                Button(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd),
+                                    onClick = {
+                                        taskExecuteViewModel.cancelCurrentTask()
+                                    }
+                                ) {
+                                    Text("取消任务")
+                                }
+                            }
                         }
-                    ) {
-                        Text("取消任务")
                     }
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = "$taskDescription ${taskState.description}",
-                        fontSize = 20.sp
-                    )
                     Text(
                         modifier = Modifier.padding(8.dp),
                         text = "$finishCount / $totalCount",

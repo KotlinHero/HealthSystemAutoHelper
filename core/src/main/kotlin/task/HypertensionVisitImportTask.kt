@@ -1,15 +1,13 @@
 package tech.kotlinhero.autohelper.core.task
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import org.openqa.selenium.WebDriver
-import tech.kotlinhero.autohelper.core.ExecuteScope
-import tech.kotlinhero.autohelper.core.HEALTH_SYSTEM_WEBSITE_URL
-import tech.kotlinhero.autohelper.core.IndexLogExecuteTask
+import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.excel.HypertensionVisitRecord
 import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
-import tech.kotlinhero.autohelper.core.healthSystemImportTask
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
@@ -22,45 +20,42 @@ data class HypertensionVisitImportTaskParams(
 )
 
 class HypertensionVisitImportTask(
-    private val params: HypertensionVisitImportTaskParams,
-    override val taskDescription: String = "导入高血压随访"
+    private val params: HypertensionVisitImportTaskParams
 ) : IndexLogExecuteTask {
 
-    override suspend fun execute(
-        block: ExecuteScope.() -> Unit
-    ) = withContext(Dispatchers.Default) {
-        val executeScope = ExecuteScope().apply { block() }
+    override val taskDescription: String = "导入高血压随访"
+
+    override fun execute(): Flow<TaskProgress> = flow {
         val driver = params.buildWebDriver()
         readExcel(params.excelPath) {
             val sheet = getSheetAt(1)
             val headRowCount = 1
-            executeScope.onTotalCountAccessible(sheet.lastRowNum)
+            totalCount(sheet.lastRowNum)
 
             driver.run {
-                executeScope.onLogAppend("正在登录系统准备导入")
+                log("正在登录系统准备导入")
                 prepareImport()
                 sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
-                    ensureActive()
                     val visitRecord = row.toHypertensionVisitRecord()
                     val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
-                    executeScope.onLogAppend("开始导入：$currentDataIdentifier")
+                    log("开始导入：$currentDataIdentifier")
                     runCatching {
                         importHyperVisitRecord(visitRecord)
                     }.fold(
                         onSuccess = {
-                            executeScope.onLogAppend("导入成功：$currentDataIdentifier")
-                            executeScope.onProgressUpdate(rowIndex + 1)
+                            log("导入成功：$currentDataIdentifier")
+                            progressUpdate(rowIndex + 1)
                         },
                         onFailure = {
-                            executeScope.onLogAppend("导入失败：$currentDataIdentifier")
-                            executeScope.onProgressUpdate(rowIndex + 1)
+                            log("导入失败：$currentDataIdentifier")
+                            progressUpdate(rowIndex + 1)
                             prepareImport()
                         }
                     )
                 }
             }
         }
-    }
+    }.flowOn(Dispatchers.Default)
 
     private fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
         name("idCard").clearSendKeys(visitRecord.id)
