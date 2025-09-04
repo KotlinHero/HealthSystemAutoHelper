@@ -64,7 +64,9 @@ class HypertensionVisitImportTask(
         allByCss("td.x-grid3-col.x-grid3-cell.x-grid3-td-0.x-grid3-cell-first").find { element ->
             element.findElement { xpath("./div") }.text == visitRecord.planDate
         }?.click()
-        xpath("//*[text() = '确定']").click()
+        runCatching {
+            xpath("//*[text() = '确定']").click()
+        }
         css("[name*='visitDate']").clearSendKeys(visitRecord.visitDate)
         css("input[type='radio'][name^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
         css("div[id^='div_sfxz'] > div > img").click()
