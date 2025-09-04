@@ -22,7 +22,6 @@ class DiabetesVisitImportTask(
             val sheet = getSheetAt(2)
             val headRowCount = 1
             totalCount(sheet.lastRowNum)
-
             driver.run {
                 log("正在登录系统准备导入")
                 prepareImport()
@@ -45,6 +44,7 @@ class DiabetesVisitImportTask(
                     )
                 }
             }
+            driver.quit()
         }
     }.flowOn(Dispatchers.Default)
 

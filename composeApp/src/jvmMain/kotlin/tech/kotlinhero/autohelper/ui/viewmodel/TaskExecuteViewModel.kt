@@ -104,9 +104,10 @@ class TaskExecuteViewModel : ViewModel() {
                     }
                 } catch (_: CancellationException) {
                     log("任务已取消")
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    log(e.message ?: "")
                     log("任务启动失败")
-                }  finally {
+                } finally {
                     _taskState.value = TaskState.FINISHED
                 }
             }

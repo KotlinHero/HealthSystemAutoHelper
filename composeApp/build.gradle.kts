@@ -25,7 +25,6 @@ kotlin {
 
             implementation(libs.filekit.dialogs.compose)
 
-            implementation(projects.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -37,6 +36,7 @@ kotlin {
                 exclude(group = "org.jetbrains.compose.material", module = "material-desktop")
             }
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(projects.core)
         }
     }
 }
@@ -48,9 +48,16 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "tech.kotlinhero.autohelper"
+            packageName = "AutoHelper"
             packageVersion = "1.0.0"
+            includeAllModules = true
             appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
+            windows {
+                iconFile.set(project.file("src/jvmMain/composeResources/drawable/app.ico"))
+                menuGroup = "AutoHelper"
+                shortcut = true
+                menu = true
+            }
         }
     }
 }
