@@ -70,7 +70,8 @@ class HypertensionVisitImportTask(
         css("[name*='visitDate']").clearSendKeys(visitRecord.visitDate)
         css("input[type='radio'][name^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
         css("div[id^='div_sfxz'] > div > img").click()
-        xpath("//*[text() = '${visitRecord.visitNature}']").click()
+        Thread.sleep(800)
+        xpath("//*[text() = '${visitRecord.visitNature.trim()}']").click()
         css("input[type='radio'][name^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][name^='currentSymptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
@@ -113,6 +114,7 @@ class HypertensionVisitImportTask(
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
+        Thread.sleep(2500)
         runCatching {
             xpath("//*[text() = '确定']").click()
         }
