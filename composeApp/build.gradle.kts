@@ -49,7 +49,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "AutoHelper"
-            packageVersion = "1.0.5"
+            packageVersion = project.ext.get("projectVersion") as String?
             includeAllModules = true
             appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
             windows {

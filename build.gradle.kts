@@ -14,6 +14,10 @@ plugins {
 
 val projectVersion = project.property("projectVersion").toString()
 
+ext {
+    set("projectVersion", projectVersion)
+}
+
 changelog {
     version = projectVersion
     path = file("CHANGELOG.md").canonicalPath

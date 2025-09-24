@@ -1,6 +1,7 @@
 package tech.kotlinhero.autohelper.core.task
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -41,6 +42,7 @@ class HypertensionVisitImportTask(
                             },
                             onFailure = {
                                 log("导入失败：$currentDataIdentifier")
+                                it.printStackTrace()
                                 progressUpdate(rowIndex + 1)
                                 prepareImport()
                             }
@@ -54,7 +56,7 @@ class HypertensionVisitImportTask(
         }
     }.flowOn(Dispatchers.Default)
 
-    private fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
+    private suspend fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
         name("idCard").clearSendKeys(visitRecord.id)
         css("button.x-btn-text.query").click()
         doubleClick {
@@ -69,9 +71,17 @@ class HypertensionVisitImportTask(
         }
         css("[name*='visitDate']").clearSendKeys(visitRecord.visitDate)
         css("input[type='radio'][name^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
+        //该下拉框疑似使用网络请求构建，增加延迟等待元素可点击
         css("div[id^='div_sfxz'] > div > img").click()
-        Thread.sleep(800)
-        xpath("//*[text() = '${visitRecord.visitNature.trim()}']").click()
+        delay(500)
+        findElements {
+            xpath("//div[text()='${visitRecord.visitNature.trim()}']")
+        }.let {
+            delay(500)
+            //未知原因会定位到两个相同的元素，一个元素只需要点击那个元素，两个元素时则需要点击第二个元素
+            //即需要点击最后一个元素
+            it.last().click()
+        }
         css("input[type='radio'][name^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][name^='currentSymptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
