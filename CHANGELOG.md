@@ -20,7 +20,13 @@ My awesome project that provides a lot of useful features, like:
 
 ### Security
 
-## [1.0.3] - 2025-09-04
+## [1.0.6] - 2025-09-24
+
+### Fixed
+
+- 修复高血压随访随访性质无法点击bug
+
+## 1.0.3 - 2025-09-04
 
 ### Fixed
 
