@@ -83,7 +83,8 @@ class HypertensionVisitImportTask(
             clearSendKeys(visitRecord.targetWeight)
         }
         css("input[id^='heartRate_']").clearSendKeys(visitRecord.heartRate)
-        css("input[id^='otherSigns_']").clearSendKeys(visitRecord.otherSigns)
+        css("input[id^='otherSigns_']").clearSendKeys("无")
+        css("input[id^='auxiliaryCheck_']").clearSendKeys("无")
         css("input[id^='smokeCount_']").clearSendKeys(visitRecord.smokeCount)
         css("input[id^='targetSmokeCount_']").clearSendKeys(visitRecord.targetSmokeCount)
         css("input[id^='drinkCount_']").clearSendKeys(visitRecord.drinkCount)
