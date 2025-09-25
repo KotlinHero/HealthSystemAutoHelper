@@ -12,10 +12,14 @@ plugins {
     alias(libs.plugins.changelog)
 }
 
-val projectVersion = project.property("projectVersion").toString()
+val projectVersion = project.property("app.version").toString()
+val packaging = project.property("app.package.name").toString()
+val appBind = project.property("app.bind").toString().toBoolean()
 
 ext {
-    set("projectVersion", projectVersion)
+    set("app.version", projectVersion)
+    set("app.package.name", packaging)
+    set("app.bind", appBind)
 }
 
 changelog {

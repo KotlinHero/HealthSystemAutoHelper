@@ -48,10 +48,12 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "AutoHelper"
-            packageVersion = project.ext.get("projectVersion") as String?
+            packageName = project.properties["app.package.name"].toString()
+            packageVersion = project.properties["app.version"].toString()
             includeAllModules = true
-            appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
+            if (project.properties["app.bind"].toString().toBoolean()) {
+                appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
+            }
             windows {
                 iconFile.set(project.file("src/jvmMain/composeResources/drawable/app.ico"))
                 menuGroup = "AutoHelper"

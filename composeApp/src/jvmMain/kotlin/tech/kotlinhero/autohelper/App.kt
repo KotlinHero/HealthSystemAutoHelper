@@ -11,7 +11,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.ui.page.Settings
 import tech.kotlinhero.autohelper.ui.page.TaskExecute
@@ -23,7 +22,6 @@ import tech.kotlinhero.autohelper.ui.theme.DynamicConfigTheme
 import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
 
 @Composable
-@Preview
 fun App(
     taskExecuteViewModel: TaskExecuteViewModel = viewModel { TaskExecuteViewModel() }
 ) {
