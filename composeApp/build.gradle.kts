@@ -63,3 +63,21 @@ compose.desktop {
         }
     }
 }
+
+interface InjectedExecOps {
+    @get:Inject val execOps: ExecOperations
+}
+
+afterEvaluate {
+    val outputDir: String = layout.buildDirectory.dir("compose/binaries/main/msi").get()
+        .asFile
+        .absolutePath
+    val injected = project.objects.newInstance<InjectedExecOps>()
+    tasks.named("packageMsi") {
+        doLast {
+            injected.execOps.exec {
+                commandLine("cmd", "/c", "start", "explorer", outputDir)
+            }
+        }
+    }
+}
