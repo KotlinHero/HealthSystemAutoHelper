@@ -1,6 +1,7 @@
 package tech.kotlinhero.autohelper.core.task
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -52,7 +53,7 @@ class DiabetesVisitImportTask(
         }
     }.flowOn(Dispatchers.Default)
 
-    private fun WebDriver.importDiabetesVisitRecord(visitRecord: DiabetesVisitRecord) {
+    private suspend fun WebDriver.importDiabetesVisitRecord(visitRecord: DiabetesVisitRecord) {
         name("idCard").clearSendKeys(visitRecord.id)
         css("button.x-btn-text.query").click()
         doubleClick {
@@ -64,8 +65,17 @@ class DiabetesVisitImportTask(
         }?.click()
         css("[name*='visitDate']").clearSendKeys(visitRecord.visitDate)
         css("input[type='radio'][id^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
+        //该下拉框疑似使用网络请求构建，增加延迟等待元素可点击
         css("div[id^='div_sfxz'] > div > img").click()
-        xpath("//*[text() = '${visitRecord.visitNature}']").click()
+        delay(500)
+        findElements {
+            xpath("//div[text()='${visitRecord.visitNature.trim()}']")
+        }.let {
+            delay(500)
+            //未知原因会定位到两个相同的元素，一个元素只需要点击那个元素，两个元素时则需要点击第二个元素
+            //即需要点击最后一个元素
+            it.last().click()
+        }
         css("input[type='radio'][id^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][id^='symptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
@@ -77,6 +87,7 @@ class DiabetesVisitImportTask(
             clear()
             clearSendKeys(visitRecord.targetWeight)
         }
+        css("input[type='checkbox'][id^='pulsation_'][value='1']").click()
         css("input[id^='fbs_']").clearSendKeys(visitRecord.bloodGlucose)
         css("input[id^='smokeCount_']").clearSendKeys(visitRecord.smokeCount)
         css("input[id^='targetSmokeCount_']").clearSendKeys(visitRecord.targetSmokeCount)
@@ -89,26 +100,40 @@ class DiabetesVisitImportTask(
         css("input[id^='otherSigns_']").clearSendKeys(visitRecord.otherSigns)
         name("food").clearSendKeys(visitRecord.food)
         name("targetFood").clearSendKeys(visitRecord.targetFood)
+        css("input[id^='psychologyChange_'][value='${visitRecord.psychologyChange.toOption()}']").click()
+        css("input[id^='obeyDoctor_'][value='${visitRecord.obeyDoctor.toOption()}']").click()
         css("input[id^='medicine_'][value='${visitRecord.medicine.toOption()}']").click()
         css("input[type='radio'][id^='visitType_'][value='${visitRecord.visitType.toOption()}']").click()
         css("input[type='radio'][id^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
+        css("input[type='radio'][id^='adverseReactions_'][value='1']").click()
+        css("input[type='radio'][id^='glycopenia_'][value='1']").click()
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
             css("div[id^='div_referralReason_'] > div > img").click()
-            xpath("//*[text() = '连续两次出现空腹血糖控制不满意']").click()
+            delay(300)
+            //与随访性质情况相同
+            findElements {
+                xpath("//*[text() = '连续两次出现空腹血糖控制不满意']")
+            }.last().click()
+            delay(300)
             css("div[id^='div_referralReason_'] > div > img").click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
+            delay(300)
             css("div[id^='div_agencyAndDept_'] > div > img").click()
-            xpath("//*[text() = '界牌镇中心卫生院慢病门诊']").click()
+            delay(300)
+            //与随访性质情况相同
+            findElements {
+                xpath("//*[text() = '界牌镇中心卫生院慢病门诊']")
+            }.last().click()
         }
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        Thread.sleep(300)
+        delay(300)
         runCatching {
             xpath("//*[text() = '取消(F2)']").click()
         }
-        Thread.sleep(300)
+        delay(300)
         css("button[id='CLOSE']").click()
     }
 

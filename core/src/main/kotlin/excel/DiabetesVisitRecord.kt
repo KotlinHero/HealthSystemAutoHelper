@@ -27,12 +27,49 @@ class DiabetesVisitRecord(
     val otherSigns: String,
     val food: String,
     val targetFood: String,
+    val psychologyChange : PsychologyChange,
+    val obeyDoctor : ObeyDoctor,
     val medicine: Medicine,
     val visitType: VisitType,
     val referralReason: String,
     val agencyAndDept: String,
     val needDoubleVisit: NeedDoubleVisit
 )
+
+internal fun Row.toDiabetesVisitRecord(): DiabetesVisitRecord {
+    return DiabetesVisitRecord(
+        name = this[1],
+        id = this[2],
+        planDate = this[11],
+        visitDate = this[12],
+        visitWay = DiabetesVisitWay(this[13]),
+        visitNature = this[14],
+        currentSymptom = Symptoms(this[15]),
+        constriction = this[16],
+        diastolic = this[17],
+        weight = this[18],
+        targetWeight = this[19],
+        bloodGlucose = this[23],
+        smokeCount = this[24],
+        targetSmokeCount = this[25],
+        drinkCount = this[26],
+        targetDrinkCount = this[27],
+        trainTimesWeek = this[28],
+        trainMinute = this[29],
+        targetTrainTimesWeek = this[30],
+        targetTrainMinute = this[31],
+        otherSigns = this[32],
+        food = this[33],
+        targetFood = this[34],
+        psychologyChange = PsychologyChange(this[35]),
+        obeyDoctor = ObeyDoctor(this[36]),
+        medicine = Medicine(this[37]),
+        visitType = VisitType(this[38]),
+        referralReason = this[40],
+        agencyAndDept = this[41],
+        needDoubleVisit = NeedDoubleVisit(this[42])
+    )
+}
 
 @JvmInline
 value class Symptoms(val value: String) {
@@ -72,37 +109,4 @@ value class VisitType(val value: String) {
         "无并发症" -> 7
         else -> throw IllegalArgumentException("未知随访分类: $value")
     }
-}
-
-internal fun Row.toDiabetesVisitRecord(): DiabetesVisitRecord {
-    return DiabetesVisitRecord(
-        name = this[1],
-        id = this[2],
-        planDate = this[11],
-        visitDate = this[12],
-        visitWay = DiabetesVisitWay(this[13]),
-        visitNature = this[14],
-        currentSymptom = Symptoms(this[15]),
-        constriction = this[16],
-        diastolic = this[17],
-        weight = this[18],
-        targetWeight = this[19],
-        bloodGlucose = this[23],
-        smokeCount = this[24],
-        targetSmokeCount = this[25],
-        drinkCount = this[26],
-        targetDrinkCount = this[27],
-        trainTimesWeek = this[28],
-        trainMinute = this[29],
-        targetTrainTimesWeek = this[30],
-        targetTrainMinute = this[31],
-        otherSigns = this[32],
-        food = this[33],
-        targetFood = this[34],
-        medicine = Medicine(this[37]),
-        visitType = VisitType(this[38]),
-        referralReason = this[40],
-        agencyAndDept = this[41],
-        needDoubleVisit = NeedDoubleVisit(this[42])
-    )
 }

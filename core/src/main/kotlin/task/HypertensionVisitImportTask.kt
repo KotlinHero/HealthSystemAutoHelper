@@ -114,17 +114,25 @@ class HypertensionVisitImportTask(
         css("input[type='radio'][name^='visitEvaluate_'][value='${visitRecord.visitEvaluate.toOption()}']").click()
         css("input[type='radio'][name^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
+            delay(300)
             css("div[id^='div_referralReason_'] > div > img").click()
-            xpath("//*[text() = '连续两次出现血压控制不满意']").click()
+            delay(300)
+            findElements {
+                xpath("//*[text() = '连续两次出现血压控制不满意']")
+            }.last().click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
+            delay(300)
             css("div[id^='div_agencyAndDept_'] > div > img").click()
-            xpath("//*[text() = '界牌镇中心卫生院慢病门诊']").click()
+            delay(300)
+            findElements {
+                xpath("//*[text() = '界牌镇中心卫生院慢病门诊']")
+            }.last().click()
         }
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        Thread.sleep(2500)
+        delay(2500)
         runCatching {
             xpath("//*[text() = '确定']").click()
         }
