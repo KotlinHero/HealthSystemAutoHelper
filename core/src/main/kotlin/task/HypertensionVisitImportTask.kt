@@ -85,7 +85,11 @@ class HypertensionVisitImportTask(
         css("input[type='radio'][name^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][name^='currentSymptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
-        ).click()
+        ).let {
+            if (!it.isSelected) {
+                it.click()
+            }
+        }
         css("input[id^='constriction_']").clearSendKeys(visitRecord.constriction)
         css("input[id^='diastolic_']").clearSendKeys(visitRecord.diastolic)
         css("input[id^='weight_']").clearSendKeys(visitRecord.weight)

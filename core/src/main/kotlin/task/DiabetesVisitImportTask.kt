@@ -79,7 +79,11 @@ class DiabetesVisitImportTask(
         css("input[type='radio'][id^='visitEffect_'][value='1']").click()
         css(
             "input[type='checkbox'][id^='symptoms_'][value='${visitRecord.currentSymptom.toOption()}']"
-        ).click()
+        ).let {
+            if (!it.isSelected) {
+                it.click()
+            }
+        }
         name("constriction").clearSendKeys(visitRecord.constriction)
         name("diastolic").clearSendKeys(visitRecord.diastolic)
         css("input[id^='weight_']").clearSendKeys(visitRecord.weight)
