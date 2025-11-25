@@ -2,6 +2,8 @@ package tech.kotlinhero.autohelper.core.excel
 
 import org.apache.poi.ss.usermodel.Row
 import tech.kotlinhero.autohelper.excel.get
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 data class HypertensionVisitRecord(
     val name: String,
@@ -155,3 +157,13 @@ value class CurrentSymptom(val value: String) {
         else -> throw IllegalArgumentException("未知症状: $value")
     }
 }
+
+val HypertensionVisitRecord.nextVisitDate: String
+    get() {
+        if (visitDate.isEmpty()) {
+            return ""
+        }
+        return LocalDate.parse(visitDate)
+            .plusDays(14)
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    }
