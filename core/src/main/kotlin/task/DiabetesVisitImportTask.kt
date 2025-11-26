@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOn
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.excel.DiabetesVisitRecord
+import tech.kotlinhero.autohelper.core.excel.nextVisitDate
 import tech.kotlinhero.autohelper.core.excel.toDiabetesVisitRecord
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
@@ -107,10 +108,19 @@ class DiabetesVisitImportTask(
         css("input[id^='psychologyChange_'][value='${visitRecord.psychologyChange.toOption()}']").click()
         css("input[id^='obeyDoctor_'][value='${visitRecord.obeyDoctor.toOption()}']").click()
         css("input[id^='medicine_'][value='${visitRecord.medicine.toOption()}']").click()
+        runCatching {
+            css("input[type='radio'][name^='medicineBadEffect_'][value='n']").click()
+        }
         css("input[type='radio'][id^='visitType_'][value='${visitRecord.visitType.toOption()}']").click()
         css("input[type='radio'][id^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
         css("input[type='radio'][id^='adverseReactions_'][value='1']").click()
         css("input[type='radio'][id^='glycopenia_'][value='1']").click()
+        css("input[type='text'][name^='nextDate']").let {
+            if (visitRecord.needDoubleVisit.value == "是"
+                && it.getAttribute("value")?.isEmpty() ?: true) {
+                it.sendKeys(visitRecord.nextVisitDate)
+            }
+        }
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
             css("div[id^='div_referralReason_'] > div > img").click()
             delay(300)
