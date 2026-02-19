@@ -20,7 +20,13 @@ My awesome project that provides a lot of useful features, like:
 
 ### Security
 
-## [1.0.8] - 2025-09-27
+## [1.3.0] - 2026-02-19
+
+### Added
+
+- 增加高血压分组评估导入功能
+
+## 1.0.8 - 2025-09-27
 
 ### Fixed
 

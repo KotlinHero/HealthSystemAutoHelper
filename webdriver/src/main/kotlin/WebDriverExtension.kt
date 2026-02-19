@@ -8,6 +8,14 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.time.Duration
 
+inline fun <T> WebDriver.use(block: WebDriver.() -> T): T {
+    try {
+        return block()
+    } finally {
+        quit()
+    }
+}
+
 @DslMarker
 annotation class WebDriverDSL
 
@@ -62,7 +70,13 @@ fun WebDriver.allByCss(css: String) = findElements { css(css) }
 fun WebDriver.xpath(xpath: String) = findElement { xpath(xpath) }
 
 @WebDriverDSL
+fun WebDriver.firstByXpath(xpath: String) = findElements { xpath(xpath) }.firstOrNull { it.isDisplayed }
+
+@WebDriverDSL
 fun WebDriver.name(name: String) = findElement { name(name) }
+
+@WebDriverDSL
+fun WebDriver.firstByName(name: String) = findElements { name(name) }.firstOrNull { it.isDisplayed }
 
 @WebDriverDSL
 fun WebDriver.name(name: String, block: WebElement.() -> Unit) {

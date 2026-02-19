@@ -1,58 +1,52 @@
 package tech.kotlinhero.autohelper.core.task
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.*
+import tech.kotlinhero.autohelper.core.business.loginHealthSystem
 import tech.kotlinhero.autohelper.core.excel.DiabetesVisitRecord
 import tech.kotlinhero.autohelper.core.excel.nextVisitDate
 import tech.kotlinhero.autohelper.core.excel.toDiabetesVisitRecord
+import tech.kotlinhero.autohelper.core.extension.flowOnDefault
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
 class DiabetesVisitImportTask(
     val params: ImportTaskParam
-) : ProgressLogTask {
+) : ProgressTask {
+
     override val taskDescription: String = "导入糖尿病随访"
 
-    override fun execute(): Flow<TaskProgress> = flow {
-        val driver = params.buildWebDriver()
-        try {
+    override fun execute(): Flow<TaskProgress> = flowOnDefault {
+        params.buildWebDriver().use {
             readExcel(params.excelPath) {
                 val sheet = getSheetAt(2)
                 val headRowCount = 1
                 totalCount(sheet.lastRowNum)
-                driver.run {
-                    log("正在登录系统准备导入")
-                    prepareImport()
-                    sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
-                        val visitRecord = row.toDiabetesVisitRecord()
-                        val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
-                        log("开始导入：$currentDataIdentifier")
-                        runCatching {
-                            importDiabetesVisitRecord(visitRecord)
-                        }.fold(
-                            onSuccess = {
-                                log("导入成功：$currentDataIdentifier")
-                                progressUpdate(rowIndex + 1)
-                            },
-                            onFailure = {
-                                log("导入失败：$currentDataIdentifier")
-                                progressUpdate(rowIndex + 1)
-                                prepareImport()
-                            }
-                        )
-                    }
+                log("正在登录系统准备导入")
+                prepareImport()
+                sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
+                    val visitRecord = row.toDiabetesVisitRecord()
+                    val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
+                    log("开始导入：$currentDataIdentifier")
+                    runCatching {
+                        importDiabetesVisitRecord(visitRecord)
+                    }.fold(
+                        onSuccess = {
+                            log("导入成功：$currentDataIdentifier")
+                            progressUpdate(rowIndex + 1)
+                        },
+                        onFailure = {
+                            log("导入失败：$currentDataIdentifier")
+                            progressUpdate(rowIndex + 1)
+                            prepareImport()
+                        }
+                    )
                 }
-                driver.quit()
             }
-        } finally {
-            driver.quit()
         }
-    }.flowOn(Dispatchers.Default)
+    }
 
     private suspend fun WebDriver.importDiabetesVisitRecord(visitRecord: DiabetesVisitRecord) {
         name("idCard").clearSendKeys(visitRecord.id)
@@ -152,7 +146,7 @@ class DiabetesVisitImportTask(
     }
 
     private fun WebDriver.prepareImport() {
-        healthSystemImportTask { loginHealthSystem(params.username, params.password) }
+        loginHealthSystem(params.username, params.password)
         css(
             "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > a"
         ).click()

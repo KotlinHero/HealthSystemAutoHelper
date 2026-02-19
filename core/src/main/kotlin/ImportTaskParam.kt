@@ -35,12 +35,10 @@ fun importTaskParam(
     )
 }
 
-fun ImportTaskParam.buildWebDriver(): WebDriver {
-    return webDriver {
-        chrome {
-            driver(driverPath)
-            binary(browserBinaryPath)
-            silent()
-        }
+fun ImportTaskParam.buildWebDriver(): WebDriver = webDriver {
+    chrome {
+        driver(driverPath)
+        binary(browserBinaryPath)
+        silent()
     }
 }

@@ -1,5 +1,7 @@
 package tech.kotlinhero.autohelper.excel
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import java.io.FileInputStream
@@ -11,3 +13,12 @@ inline fun readExcel(path: String, block: Workbook.() -> Unit) {
         }
     }
 }
+
+suspend fun <T> readExcel(path: String, block: suspend (Workbook) -> T): T =
+    withContext(Dispatchers.IO) {
+        FileInputStream(path).use { inputStream ->
+            WorkbookFactory.create(inputStream).use { workbook ->
+                block(workbook)
+            }
+        }
+    }

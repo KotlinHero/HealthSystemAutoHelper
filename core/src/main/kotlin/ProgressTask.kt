@@ -3,10 +3,10 @@ package tech.kotlinhero.autohelper.core
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 
-interface ProgressLogTask {
+interface ProgressTask : IndependentTask<Flow<TaskProgress>> {
     val taskDescription: String
 
-    fun execute(): Flow<TaskProgress>
+    override fun execute(): Flow<TaskProgress>
 }
 
 sealed interface TaskProgress {

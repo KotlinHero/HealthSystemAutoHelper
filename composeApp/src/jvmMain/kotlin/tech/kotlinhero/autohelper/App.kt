@@ -63,7 +63,7 @@ fun App(
                                 navController.navigate(TaskExecuteRouterItem.route)
                             },
                     ) {
-                        if (taskState == TaskState.FINISHED) {
+                        if (taskState == TaskState.Finished) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 progress = { 1f }

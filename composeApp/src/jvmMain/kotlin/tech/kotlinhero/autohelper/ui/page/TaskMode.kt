@@ -67,10 +67,36 @@ fun TaskMode(
                     )
                 }
             }
+            var showHypertensionRiskStratificationDialog by remember { mutableStateOf(false) }
+            if (showHypertensionRiskStratificationDialog) {
+                Dialog(
+                    onDismissRequest = { showHypertensionRiskStratificationDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.hyperVisitUsername,
+                        defaultPassword = AppPreferences.hyperVisitPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startHypertensionRiskStratificationTask(params)
+                            AppPreferences.hyperVisitUsername = params.username
+                            AppPreferences.hyperVisitPassword = params.password
+                            showHypertensionRiskStratificationDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("导入高血压分组评估")
+                            }
+                        }
+                    )
+                }
+            }
             TaskModeItem(
                 modeDescription = "导入高血压随访",
                 onCreateClick = {
                     showHyperTaskDialog = true
+                }
+            )
+            TaskModeItem(
+                modeDescription = "导入高血压分组评估",
+                onCreateClick = {
+                    showHypertensionRiskStratificationDialog = true
                 }
             )
             TaskModeItem(

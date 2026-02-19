@@ -1,61 +1,54 @@
 package tech.kotlinhero.autohelper.core.task
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.*
+import tech.kotlinhero.autohelper.core.business.gotoHypertensionRecordListPage
+import tech.kotlinhero.autohelper.core.business.loginHealthSystem
 import tech.kotlinhero.autohelper.core.excel.HypertensionVisitRecord
 import tech.kotlinhero.autohelper.core.excel.nextVisitDate
 import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
+import tech.kotlinhero.autohelper.core.extension.flowOnDefault
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 
 class HypertensionVisitImportTask(
     private val params: ImportTaskParam
-) : ProgressLogTask {
+) : ProgressTask {
 
     override val taskDescription: String = "导入高血压随访"
 
-    override fun execute(): Flow<TaskProgress> = flow {
-        val driver = params.buildWebDriver()
-        try {
+    override fun execute(): Flow<TaskProgress> = flowOnDefault {
+        params.buildWebDriver().use {
             readExcel(params.excelPath) {
                 val sheet = getSheetAt(1)
                 val headRowCount = 1
                 totalCount(sheet.lastRowNum)
-
-                driver.run {
-                    log("正在登录系统准备导入")
-                    prepareImport()
-                    sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
-                        val visitRecord = row.toHypertensionVisitRecord()
-                        val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
-                        log("开始导入：$currentDataIdentifier")
-                        runCatching {
-                            importHyperVisitRecord(visitRecord)
-                        }.fold(
-                            onSuccess = {
-                                log("导入成功：$currentDataIdentifier")
-                                progressUpdate(rowIndex + 1)
-                            },
-                            onFailure = {
-                                log("导入失败：$currentDataIdentifier")
-                                it.printStackTrace()
-                                progressUpdate(rowIndex + 1)
-                                prepareImport()
-                            }
-                        )
-                    }
+                log("正在登录系统准备导入")
+                prepareImport()
+                sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
+                    val visitRecord = row.toHypertensionVisitRecord()
+                    val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
+                    log("开始导入：$currentDataIdentifier")
+                    runCatching {
+                        importHyperVisitRecord(visitRecord)
+                    }.fold(
+                        onSuccess = {
+                            log("导入成功：$currentDataIdentifier")
+                            progressUpdate(rowIndex + 1)
+                        },
+                        onFailure = {
+                            log("导入失败：$currentDataIdentifier")
+                            it.printStackTrace()
+                            progressUpdate(rowIndex + 1)
+                            prepareImport()
+                        }
+                    )
                 }
-                driver.quit()
             }
-        } finally {
-            driver.quit()
         }
-    }.flowOn(Dispatchers.Default)
+    }
 
     private suspend fun WebDriver.importHyperVisitRecord(visitRecord: HypertensionVisitRecord) {
         name("idCard").clearSendKeys(visitRecord.id)
@@ -123,7 +116,8 @@ class HypertensionVisitImportTask(
         css("input[type='radio'][name^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
         css("input[type='text'][name^='nextDate_']").let {
             if (visitRecord.needDoubleVisit.value == "是"
-                && it.getAttribute("value")?.equals("下次随访日期") ?: true) {
+                && it.getAttribute("value")?.equals("下次随访日期") ?: true
+            ) {
                 it.sendKeys(visitRecord.nextVisitDate)
             }
         }
@@ -154,13 +148,7 @@ class HypertensionVisitImportTask(
     }
 
     private fun WebDriver.prepareImport() {
-        healthSystemImportTask { loginHealthSystem(params.username, params.password) }
-        css(
-            "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > a"
-        ).click()
-        xpath("//a[text()='高血压管理']").click()
-        css("a[title='高血压档案管理']").click()
-        allByCss("img.x-form-trigger.x-form-arrow-trigger").getOrNull(0)?.click()
-        css("html > body > div:nth-of-type(8) > div > div:nth-of-type(6)").click()
+        loginHealthSystem(params.username, params.password)
+        gotoHypertensionRecordListPage()
     }
 }
