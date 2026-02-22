@@ -5,7 +5,7 @@ import tech.kotlinhero.autohelper.excel.get
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-data class HypertensionVisitRecord(
+data class HypertensionRecord(
     val name: String,
     val id: String,
     val planDate: String,
@@ -38,8 +38,8 @@ data class HypertensionVisitRecord(
     val needDoubleVisit: NeedDoubleVisit
 )
 
-internal fun Row.toHypertensionVisitRecord(): HypertensionVisitRecord {
-    return HypertensionVisitRecord(
+internal fun Row.toHypertensionVisitRecord(): HypertensionRecord {
+    return HypertensionRecord(
         name = this[1],
         id = this[2],
         planDate = this[11],
@@ -158,7 +158,7 @@ value class CurrentSymptom(val value: String) {
     }
 }
 
-val HypertensionVisitRecord.nextVisitDate: String
+val HypertensionRecord.nextVisitDate: String
     get() {
         if (visitDate.isEmpty()) {
             return ""

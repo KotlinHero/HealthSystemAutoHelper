@@ -9,3 +9,7 @@ interface IndependentTask<R> : Task<Unit, R> {
 
     fun execute(): R
 }
+
+interface TaskDescription {
+    val taskDescription: String
+}

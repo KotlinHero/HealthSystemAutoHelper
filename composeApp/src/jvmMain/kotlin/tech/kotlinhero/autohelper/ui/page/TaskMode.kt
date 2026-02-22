@@ -87,6 +87,26 @@ fun TaskMode(
                     )
                 }
             }
+            var showDiabetesRiskStratificationDialog by remember { mutableStateOf(false) }
+            if (showDiabetesRiskStratificationDialog) {
+                Dialog(
+                    onDismissRequest = { showDiabetesRiskStratificationDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.diabetesUsername,
+                        defaultPassword = AppPreferences.diabetesPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startDiabetesRiskStratificationTask(params)
+                            AppPreferences.diabetesUsername = params.username
+                            AppPreferences.diabetesPassword = params.password
+                            showDiabetesRiskStratificationDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("导入糖尿病分组评估")
+                            }
+                        }
+                    )
+                }
+            }
             TaskModeItem(
                 modeDescription = "导入高血压随访",
                 onCreateClick = {
@@ -103,6 +123,12 @@ fun TaskMode(
                 modeDescription = "导入糖尿病随访",
                 onCreateClick = {
                     showDiabetesTaskDialog = true
+                }
+            )
+            TaskModeItem(
+                modeDescription = "导入糖尿病分组评估",
+                onCreateClick = {
+                    showDiabetesRiskStratificationDialog = true
                 }
             )
         }

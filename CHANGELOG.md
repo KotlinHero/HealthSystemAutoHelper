@@ -25,6 +25,7 @@ My awesome project that provides a lot of useful features, like:
 ### Added
 
 - 增加高血压分组评估导入功能
+- 增加糖尿病分组评估导入功能
 
 ## 1.0.8 - 2025-09-27
 

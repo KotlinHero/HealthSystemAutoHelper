@@ -55,8 +55,10 @@ internal class DefaultChromeDriverBuilder(
         addArguments("--window-size=1920,1080")
     }
 
-    fun build(): WebDriver = ChromeDriver(
-        serviceBuilder.build(),
-        options.apply { addDefaultArguments() }
+    fun build(): WebDriver = SafeQuitWebDriver(
+        ChromeDriver(
+            serviceBuilder.build(),
+            options.apply { addDefaultArguments() }
+        )
     )
 }

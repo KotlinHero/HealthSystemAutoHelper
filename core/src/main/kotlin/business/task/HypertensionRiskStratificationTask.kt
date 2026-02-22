@@ -1,4 +1,4 @@
-package tech.kotlinhero.autohelper.core.task
+package tech.kotlinhero.autohelper.core.business.task
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -9,6 +9,8 @@ import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.business.gotoHypertensionRecordListPage
 import tech.kotlinhero.autohelper.core.business.loginHealthSystem
 import tech.kotlinhero.autohelper.core.extension.flowOnDefault
+import tech.kotlinhero.autohelper.core.task.HealthRecordDescription
+import tech.kotlinhero.autohelper.core.task.SimpleRecordDescription
 import tech.kotlinhero.autohelper.excel.get
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
@@ -31,14 +33,14 @@ class HypertensionRiskStratificationTask(
                 launch { prepareImport() }
                 readRecords()
             }
-            totalCount(records.size)
+            emitTotalCount(records.size)
             records.forEachIndexed { index, record ->
                 runCatching {
-                    progressUpdate(index)
+                    emitProgressUpdate(index)
                     importRecord(record)
                 }.onFailure {
                     it.printStackTrace()
-                    log("导入失败:${record.id}-${record.name}")
+                    emitLog("导入失败:${record.id}-${record.name}")
                     prepareImport()
                 }
             }
@@ -89,7 +91,7 @@ class HypertensionRiskStratificationTask(
             }
         }
 
-    data class HypertensionRiskStratificationRecord(
+    private data class HypertensionRiskStratificationRecord(
         val fixDate: String,
         val name: String,
         val id: String,
@@ -97,5 +99,5 @@ class HypertensionRiskStratificationTask(
         val diastolic: String,
         val height: String,
         val weight: String,
-    )
+    ) : HealthRecordDescription by SimpleRecordDescription(name, id)
 }

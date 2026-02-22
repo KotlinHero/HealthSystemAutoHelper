@@ -8,16 +8,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import tech.kotlinhero.autohelper.core.ProgressTask
-import tech.kotlinhero.autohelper.core.TaskProgress
-import tech.kotlinhero.autohelper.core.TaskState
-import tech.kotlinhero.autohelper.core.browserDriverConfig
+import tech.kotlinhero.autohelper.core.*
+import tech.kotlinhero.autohelper.core.business.diabetes.risk.DiabetesRiskStratificationTask
+import tech.kotlinhero.autohelper.core.business.task.DiabetesVisitImportTask
+import tech.kotlinhero.autohelper.core.business.task.HypertensionRiskStratificationTask
+import tech.kotlinhero.autohelper.core.business.task.HypertensionVisitImportTask
 import tech.kotlinhero.autohelper.core.config.AppPreferences
-import tech.kotlinhero.autohelper.core.healthSystemAuthentication
-import tech.kotlinhero.autohelper.core.importTaskParam
-import tech.kotlinhero.autohelper.core.task.DiabetesVisitImportTask
-import tech.kotlinhero.autohelper.core.task.HypertensionRiskStratificationTask
-import tech.kotlinhero.autohelper.core.task.HypertensionVisitImportTask
 
 class TaskExecuteViewModel : ViewModel() {
 
@@ -94,6 +90,18 @@ class TaskExecuteViewModel : ViewModel() {
     ) {
         startIndexLogTask(
             HypertensionRiskStratificationTask(
+                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
+                healthSystemAuthentication(params.username, params.password),
+                params.excelPath
+            )
+        )
+    }
+
+    fun startDiabetesRiskStratificationTask(
+        params: UserExcelTaskStartParams,
+    ) {
+        startIndexLogTask(
+            DiabetesRiskStratificationTask(
                 browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
                 healthSystemAuthentication(params.username, params.password),
                 params.excelPath

@@ -1,11 +1,13 @@
 package tech.kotlinhero.autohelper.core.excel
 
 import org.apache.poi.ss.usermodel.Row
+import tech.kotlinhero.autohelper.core.task.HealthRecordDescription
+import tech.kotlinhero.autohelper.core.task.SimpleRecordDescription
 import tech.kotlinhero.autohelper.excel.get
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class DiabetesVisitRecord(
+class DiabetesRecord(
     val name: String,
     val id: String,
     val planDate: String,
@@ -29,17 +31,17 @@ class DiabetesVisitRecord(
     val otherSigns: String,
     val food: String,
     val targetFood: String,
-    val psychologyChange : PsychologyChange,
-    val obeyDoctor : ObeyDoctor,
+    val psychologyChange: PsychologyChange,
+    val obeyDoctor: ObeyDoctor,
     val medicine: Medicine,
     val visitType: VisitType,
     val referralReason: String,
     val agencyAndDept: String,
     val needDoubleVisit: NeedDoubleVisit
-)
+) : HealthRecordDescription by SimpleRecordDescription(id, name)
 
-internal fun Row.toDiabetesVisitRecord(): DiabetesVisitRecord {
-    return DiabetesVisitRecord(
+fun Row.toDiabetesRecord(): DiabetesRecord {
+    return DiabetesRecord(
         name = this[1],
         id = this[2],
         planDate = this[11],
@@ -113,7 +115,7 @@ value class VisitType(val value: String) {
     }
 }
 
-val DiabetesVisitRecord.nextVisitDate: String
+val DiabetesRecord.nextVisitDate: String
     get() {
         if (visitDate.isEmpty()) {
             return ""
@@ -122,3 +124,5 @@ val DiabetesVisitRecord.nextVisitDate: String
             .plusDays(14)
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
     }
+
+fun diabetesRecordMapper(): ExcelRowMapper<DiabetesRecord> = excelRowMapper(2) { it.toDiabetesRecord() }
