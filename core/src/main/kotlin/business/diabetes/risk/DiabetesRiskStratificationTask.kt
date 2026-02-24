@@ -62,6 +62,7 @@ private class DiabetesRiskStratificationImporter(
                 css("table[class='x-grid3-row-table']")
             }
             xpath("//*[text() = '糖尿病分组']").click()
+            firstByName("fixDate")?.clearSendKeys(record.planDate)
             firstByName("fbs")?.clearSendKeys(record.bloodGlucose)
             firstByXpath("//*[text() = '确定(F1)']")?.click()
             delay(500)

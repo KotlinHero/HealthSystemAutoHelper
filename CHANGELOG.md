@@ -20,7 +20,13 @@ My awesome project that provides a lot of useful features, like:
 
 ### Security
 
-## [1.4.0] - 2026-02-22
+## [1.4.1] - 2026-02-24
+
+### Fixed
+
+- 修复糖尿病分组评估导入时日期未输入问题
+
+## 1.4.0 - 2026-02-22
 
 ### Added
 
