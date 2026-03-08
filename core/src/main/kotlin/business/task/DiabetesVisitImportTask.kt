@@ -112,9 +112,8 @@ class DiabetesVisitImportTask(
         css("input[type='radio'][id^='glycopenia_'][value='1']").click()
         css("input[type='text'][name^='nextDate']").let {
             if (visitRecord.needDoubleVisit.value == "是"
-                && it.getAttribute("value")?.isEmpty() ?: true
             ) {
-                it.sendKeys(visitRecord.nextVisitDate)
+                it.clearSendKeys(visitRecord.nextVisitDate)
             }
         }
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {

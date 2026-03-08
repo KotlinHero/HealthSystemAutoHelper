@@ -4,7 +4,6 @@ import org.apache.poi.ss.usermodel.Row
 
 interface ExcelRowMapper<out T> {
     val dropCount: Int
-
     val sheetIndex: Int
     fun mapRowTo(row: Row): T
 }

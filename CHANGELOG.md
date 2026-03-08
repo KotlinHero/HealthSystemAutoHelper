@@ -20,7 +20,19 @@ My awesome project that provides a lot of useful features, like:
 
 ### Security
 
-## [1.4.1] - 2026-02-24
+## [1.6.0] - 2026-03-08
+
+### Added
+
+- 从WPF版迁移完善体检表功能
+
+## 1.5.0 - 2026-02-25
+
+### Changed
+
+- 调整下次随访日期输入逻辑
+
+## 1.4.1 - 2026-02-24
 
 ### Fixed
 

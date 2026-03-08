@@ -11,13 +11,13 @@ import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.use
 
 interface HealthRecordImporter<T> :
-    ExcelRowMapper<T>,
     HealthImportPrepare,
     HealthSingleRecordImport<T>
 
 class HealthExcelListProgressTask<T : HealthRecordDescription>(
     private val driver: WebDriver,
     private val importer: HealthRecordImporter<T>,
+    private val excelRowMapper: ExcelRowMapper<T>,
     private val excelFilePath: String
 ) : IndependentTask<Flow<TaskProgress>> {
 
@@ -43,9 +43,9 @@ class HealthExcelListProgressTask<T : HealthRecordDescription>(
 
     private suspend fun readRecords(): List<T> =
         readExcel(excelFilePath) { workbook ->
-            val sheet = workbook.getSheetAt(importer.sheetIndex)
-            sheet.drop(importer.dropCount).map { row ->
-                importer.mapRowTo(row)
+            val sheet = workbook.getSheetAt(excelRowMapper.sheetIndex)
+            sheet.drop(excelRowMapper.dropCount).map { row ->
+                excelRowMapper.mapRowTo(row)
             }
         }
 }

@@ -8,17 +8,10 @@ import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.business.diabetes.gotoDiabetesRecordListPage
 import tech.kotlinhero.autohelper.core.business.loginHealthSystem
 import tech.kotlinhero.autohelper.core.excel.DiabetesRecord
-import tech.kotlinhero.autohelper.core.excel.ExcelRowMapper
 import tech.kotlinhero.autohelper.core.excel.diabetesRecordMapper
 import tech.kotlinhero.autohelper.core.task.HealthExcelListProgressTask
 import tech.kotlinhero.autohelper.core.task.HealthRecordImporter
-import tech.kotlinhero.autohelper.webdriver.clearSendKeys
-import tech.kotlinhero.autohelper.webdriver.css
-import tech.kotlinhero.autohelper.webdriver.doubleClick
-import tech.kotlinhero.autohelper.webdriver.firstByName
-import tech.kotlinhero.autohelper.webdriver.firstByXpath
-import tech.kotlinhero.autohelper.webdriver.name
-import tech.kotlinhero.autohelper.webdriver.xpath
+import tech.kotlinhero.autohelper.webdriver.*
 
 class DiabetesRiskStratificationTask(
     private val browserDriverConfig: BrowserDriverConfig,
@@ -36,6 +29,7 @@ class DiabetesRiskStratificationTask(
                 driver = driver,
                 authentication = healthSystemAuthentication
             ),
+            excelRowMapper = diabetesRecordMapper(),
             excelFilePath = excelFilePath
         ).execute().onCompletion {
             driver.quit()
@@ -46,8 +40,7 @@ class DiabetesRiskStratificationTask(
 private class DiabetesRiskStratificationImporter(
     private val driver: WebDriver,
     private val authentication: HealthSystemAuthentication
-) : HealthRecordImporter<DiabetesRecord>,
-    ExcelRowMapper<DiabetesRecord> by diabetesRecordMapper() {
+) : HealthRecordImporter<DiabetesRecord> {
 
     override fun prepareImport() = driver.run {
         loginHealthSystem(authentication)

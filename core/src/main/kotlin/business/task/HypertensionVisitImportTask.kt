@@ -115,10 +115,8 @@ class HypertensionVisitImportTask(
         css("input[type='radio'][name^='visitEvaluate_'][value='${visitRecord.visitEvaluate.toOption()}']").click()
         css("input[type='radio'][name^='needdoublevisit_'][value='${visitRecord.needDoubleVisit.toOption()}']").click()
         css("input[type='text'][name^='nextDate_']").let {
-            if (visitRecord.needDoubleVisit.value == "是"
-                && it.getAttribute("value")?.equals("下次随访日期") ?: true
-            ) {
-                it.sendKeys(visitRecord.nextVisitDate)
+            if (visitRecord.needDoubleVisit.value == "是") {
+                it.clearSendKeys(visitRecord.nextVisitDate)
             }
         }
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {

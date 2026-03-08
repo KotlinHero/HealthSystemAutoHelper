@@ -28,7 +28,9 @@ fun WebDriver.findElement(block: FindElementConditionBuilder.() -> By): WebEleme
         ExpectedConditions.elementToBeClickable(
             DefaultFindElementConditionBuilder().block()
         )
-    )
+    ).also {
+        Actions(this).moveToElement(it).perform()
+    }
 }
 
 @WebDriverDSL
@@ -84,9 +86,31 @@ fun WebDriver.name(name: String, block: WebElement.() -> Unit) {
 }
 
 @WebDriverDSL
+fun WebDriver.xpathByNameWithValue(name: String, value: String): WebElement =
+    xpath("//input[@name='${name}'][@value='${value}']")
+
+@WebDriverDSL
+fun WebDriver.id(id: String) = findElement { id(id) }
+
+@WebDriverDSL
 fun WebElement.clearSendKeys(keys: String) {
     click()
     clear()
     click()
     sendKeys(keys)
+}
+
+@WebDriverDSL
+fun WebElement.selectWhenNotSelected() {
+    if (!isSelected) click()
+}
+
+@WebDriverDSL
+fun WebElement.sendKeysWhenInputEmpty(keys: String) {
+    if (getAttribute("value")?.isEmpty() ?: false) sendKeys(keys)
+}
+
+@WebDriverDSL
+fun WebElement.sendKeysWhenValueNotEmpty(keys: String) {
+    if (keys.isNotEmpty()) clearSendKeys(keys)
 }
