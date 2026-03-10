@@ -44,7 +44,7 @@ private class HealthFormCompleteImporter(
     private val authentication: HealthSystemAuthentication
 ) : HealthRecordImporter<HealthFormRecord> {
 
-    override fun prepareImport() = driver.run {
+    override suspend fun prepareImport() = driver.run {
         loginHealthSystem(authentication)
         gotoHealthFormListPage()
     }
@@ -262,7 +262,7 @@ private class HealthFormCompleteImporter(
         }
 
         firstByXpath("//*[text() = '确定(F1)']")?.click()
-        delay(500)
+        delay(1000)
         css("button[id='CLOSE']").click()
     }
 
@@ -362,7 +362,7 @@ private val HealthFormRecord.otherDiseases: String
     get() = listOf(
         isHypertension to "高血压",
         isDiabetes to "糖尿病"
-    ).filter { it.first }.joinToString(",")
+    ).filter { it.first }.joinToString(",") { it.second }
 
 private val HealthFormRecord.medicineFlag: String
     get() = if (medicineUse1.isEmpty()) "n" else "y"
@@ -397,17 +397,9 @@ private val HealthFormRecord.riskControls: List<String>
         hasOther to "7"
     ).asSequence().filter { it.first }.map { it.second }.toList()
 
-//private fun formatDateToYMD(input: String): String {
-//    val timeFormatter = DateTimeFormatterBuilder()
-//        .appendPattern("M/d/")
-//        .appendValueReduced(ChronoField.YEAR, 2, 2, 2000)
-//        .toFormatter()
-//    val date = LocalDate.parse(input, timeFormatter)
-//    return date.format(DateTimeFormatter.ISO_LOCAL_DATE)
-//}
 
 private class HealthFormExcelRowMapper : ExcelRowMapper<HealthFormRecord> {
-    override val dropCount: Int = 2
+    override val dropCount: Int = 3
     override val sheetIndex: Int = 0
 
     override fun mapRowTo(row: Row): HealthFormRecord {

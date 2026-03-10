@@ -42,7 +42,7 @@ private class DiabetesRiskStratificationImporter(
     private val authentication: HealthSystemAuthentication
 ) : HealthRecordImporter<DiabetesRecord> {
 
-    override fun prepareImport() = driver.run {
+    override suspend fun prepareImport() = driver.run {
         loginHealthSystem(authentication)
         gotoDiabetesRecordListPage()
     }

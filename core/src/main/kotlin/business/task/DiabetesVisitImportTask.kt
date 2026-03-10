@@ -146,7 +146,7 @@ class DiabetesVisitImportTask(
         css("button[id='CLOSE']").click()
     }
 
-    private fun WebDriver.prepareImport() {
+    private suspend fun WebDriver.prepareImport() {
         loginHealthSystem(params.username, params.password)
         gotoDiabetesRecordListPage()
     }

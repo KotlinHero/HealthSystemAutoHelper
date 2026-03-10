@@ -12,7 +12,7 @@ interface HealthRecordDescription {
 }
 
 interface HealthImportPrepare {
-    fun prepareImport()
+    suspend fun prepareImport()
 }
 
 interface HealthSingleRecordImport<in T> {
