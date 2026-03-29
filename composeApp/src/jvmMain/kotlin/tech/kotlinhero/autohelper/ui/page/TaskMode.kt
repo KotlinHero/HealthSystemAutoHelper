@@ -127,6 +127,27 @@ fun TaskMode(
                     )
                 }
             }
+            var showHealthFormCreateDialog by remember { mutableStateOf(false) }
+            if (showHealthFormCreateDialog) {
+                Dialog(
+                    onDismissRequest = { showHealthFormCreateDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.diabetesUsername,
+                        defaultPassword = AppPreferences.diabetesPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startHealthFormCreateTask(params)
+                            AppPreferences.diabetesUsername = params.username
+                            AppPreferences.diabetesPassword = params.password
+                            showHealthFormCreateDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("新建健康体检表")
+                            }
+                        }
+                    )
+                }
+            }
+
             TaskModeItem(
                 modeDescription = "导入高血压随访",
                 onCreateClick = {
@@ -149,6 +170,12 @@ fun TaskMode(
                 modeDescription = "导入糖尿病分组评估",
                 onCreateClick = {
                     showDiabetesRiskStratificationDialog = true
+                }
+            )
+            TaskModeItem(
+                modeDescription = "新建健康体检表",
+                onCreateClick = {
+                    showHealthFormCreateDialog = true
                 }
             )
             TaskModeItem(

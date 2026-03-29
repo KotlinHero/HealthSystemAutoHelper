@@ -13,26 +13,30 @@ import tech.kotlinhero.autohelper.core.task.HealthRecordDescription
 import tech.kotlinhero.autohelper.core.task.HealthRecordImporter
 import tech.kotlinhero.autohelper.core.task.SimpleRecordDescription
 import tech.kotlinhero.autohelper.excel.get
-import tech.kotlinhero.autohelper.webdriver.*
+import tech.kotlinhero.autohelper.webdriver.clearSendKeys
+import tech.kotlinhero.autohelper.webdriver.css
+import tech.kotlinhero.autohelper.webdriver.doubleClick
+import tech.kotlinhero.autohelper.webdriver.firstByXpath
+import tech.kotlinhero.autohelper.webdriver.name
 import kotlin.time.Duration.Companion.milliseconds
 
-class HealthFormCompleteTask(
+class HealthFormCreateTask(
     private val browserDriverConfig: BrowserDriverConfig,
     private val healthSystemAuthentication: HealthSystemAuthentication,
     private val excelFilePath: String
 ) : ProgressTask {
 
-    override val taskDescription: String = "完善体检表任务"
+    override val taskDescription: String = "新建体检表任务"
 
     override fun execute(): Flow<TaskProgress> {
         val driver = browserDriverConfig.buildWebDriver()
         return HealthExcelListProgressTask(
             driver = driver,
-            importer = HealthFormCompleteImporter(
+            importer = HealthFormCreateImporter(
                 driver = driver,
                 authentication = healthSystemAuthentication
             ),
-            excelRowMapper = HealthFormExcelRowMapper(),
+            excelRowMapper = HealthFormCreateRowMapper(),
             excelFilePath = excelFilePath
         ).execute().onCompletion {
             driver.quit()
@@ -40,28 +44,26 @@ class HealthFormCompleteTask(
     }
 }
 
-private class HealthFormCompleteImporter(
+private class HealthFormCreateImporter(
     private val driver: WebDriver,
     private val authentication: HealthSystemAuthentication
-) : HealthRecordImporter<HealthFormCompleteRecord> {
+) : HealthRecordImporter<HealthFormCreateRecord> {
 
     override suspend fun prepareImport() = driver.run {
         loginHealthSystem(authentication)
         gotoHealthFormListPage()
     }
 
-    override suspend fun importRecord(record: HealthFormCompleteRecord): Unit = driver.run {
+    override suspend fun importRecord(record: HealthFormCreateRecord): Unit = driver.run {
         name("idCard").clearSendKeys(record.id)
         css("button.x-btn-text.query").click()
         doubleClick {
             css("table[class='x-grid3-row-table']")
         }
+        delay(5000.milliseconds)
+        firstByXpath("//*[text() = '新建(F2)']")?.click()
         delay(1000.milliseconds)
-        findElements {
-            xpath("//div[@class='x-grid3-cell-inner x-grid3-col-0']")
-        }.firstOrNull {
-            it.text == record.checkDate
-        }?.click() ?: throw IllegalArgumentException()
+        name("checkDate").clearSendKeys(record.checkDate)
 
         delay(1500.milliseconds)
         record.checkWays.forEach { checkWay ->
@@ -139,34 +141,7 @@ private class HealthFormCompleteImporter(
             selectWhenNotSelect("footPulse" to "2")
         }
 
-        listOf(
-            "hgb" to record.hemoglobin,
-            "wbc" to record.whiteBloodCell,
-            "platelet" to record.platelet
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
-
         sendKeysWhenInputEmpty("fbs" to record.fastingBloodGlucose)
-
-        selectWhenNotSelect("ecg" to if (record.isEcgNormal) "1" else "2")
-
-        listOf(
-            "alt" to record.serumAlanineAminotransferase,
-            "ast" to record.serumGlutamicOxalaceticTransaminase,
-            "tbil" to record.totalBilirubin,
-            "cr" to record.serumCreatinine,
-            "bun" to record.bloodUreaNitrogen,
-            "tc" to record.totalCholesterol,
-            "tg" to record.triglyceride,
-            "ldl" to record.serumLowDensityLipoproteinCholesterol,
-            "hdl" to record.serumHighDensityLipoproteinCholesterol
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
-
-        if (record.chestXray.isNotEmpty()) {
-            selectWhenNotSelect("x" to if (record.chestXray == "正常") "1" else "2")
-        }
-        if (record.bulTrasonic.isNotEmpty()) {
-            selectWhenNotSelect("b" to if (record.bulTrasonic == "正常") "1" else "2")
-        }
 
         listOf(
             "cerebrovascularDiseases" to "1",
@@ -185,12 +160,10 @@ private class HealthFormCompleteImporter(
             selectWhenNotSelect("otherDiseasesone" to "1")
         }
 
-        delay(500.milliseconds)
-
         listOf(
             "inhospitalFlag" to "n",
             "infamilybedFlag" to "n",
-            "medicineFlag" to record.medicineFlag
+            "medicineFlag" to "y"
         ).forEach { selectWhenNotSelect(it) }
 
         val medicineElementSuffix = getMedicineElementSuffix()
@@ -230,9 +203,6 @@ private class HealthFormCompleteImporter(
             selectWhenNotSelect("abnormality" to "2")
             listOf(
                 "abnormality1" to record.abnormality1,
-                "abnormality2" to record.abnormality2,
-                "abnormality3" to record.abnormality3,
-                "abnormality4" to record.abnormality4
             ).forEach {
                 sendKeysWhenValueNotEmpty(it)
             }
@@ -250,9 +220,14 @@ private class HealthFormCompleteImporter(
         if (record.isNeedLostWeight) {
             sendKeysWhenValueNotEmpty("targetWeight" to record.targetWeight)
         }
-        if (record.isSuggestVaccination) {
-            sendKeysWhenValueNotEmpty("vaccine" to record.vaccine)
+
+        record.run {
+            if (isElder && isDiabetes && !isHypertension) {
+                selectWhenNotSelect("riskfactorsControl" to "6")
+                sendKeysWhenValueNotEmpty("vaccine" to "流感，肺炎疫苗")
+            }
         }
+
         if (record.hasOther) {
             sendKeysWhenValueNotEmpty("pjOther" to record.pjOther)
         }
@@ -263,7 +238,7 @@ private class HealthFormCompleteImporter(
     }
 }
 
-private data class HealthFormCompleteRecord(
+private data class HealthFormCreateRecord(
     override val checkDate: String,
     override val name: String,
     override val id: String,
@@ -282,22 +257,7 @@ private data class HealthFormCompleteRecord(
     override val waistline: String,
     override val leftEye: String,
     override val rightEye: String,
-    val hemoglobin: String,
-    val whiteBloodCell: String,
-    val platelet: String,
     override val fastingBloodGlucose: String,
-    val isEcgNormal: Boolean,
-    val serumAlanineAminotransferase: String,
-    val serumGlutamicOxalaceticTransaminase: String,
-    val totalBilirubin: String,
-    val serumCreatinine: String,
-    val bloodUreaNitrogen: String,
-    val totalCholesterol: String,
-    val triglyceride: String,
-    val serumLowDensityLipoproteinCholesterol: String,
-    val serumHighDensityLipoproteinCholesterol: String,
-    val chestXray: String,
-    val bulTrasonic: String,
     override val medicineUse1: String,
     override val medicine1: String,
     override val medicineUseDate1: String,
@@ -320,9 +280,6 @@ private data class HealthFormCompleteRecord(
     override val medicineYield4: MedicineYield,
     override val hasAbnormal: Boolean,
     override val abnormality1: String,
-    val abnormality2: String,
-    val abnormality3: String,
-    val abnormality4: String,
     override val isPutIntoAdministration: Boolean,
     override val isSuggestedReview: Boolean,
     override val isSuggestReferral: Boolean,
@@ -332,105 +289,85 @@ private data class HealthFormCompleteRecord(
     override val isNeedExercise: Boolean,
     override val isNeedLostWeight: Boolean,
     override val targetWeight: String,
-    val isSuggestVaccination: Boolean,
-    val vaccine: String,
     override val hasOther: Boolean,
     override val pjOther: String,
 ) : HealthForm, HealthRecordDescription by SimpleRecordDescription(id, name)
 
-
-private val HealthFormCompleteRecord.medicineFlag: String
-    get() = if (medicineUse1.isEmpty()) "n" else "y"
-
-private val HealthFormCompleteRecord.riskControls: List<String>
+private val HealthFormCreateRecord.riskControls: List<String>
     get() = listOf(
         isNeedQuitSmoking to "1",
         isNeedHealthDrinking to "2",
         isNeedDiet to "3",
         isNeedExercise to "4",
         isNeedLostWeight to "5",
-        isSuggestVaccination to "6",
         hasOther to "7"
     ).asSequence().filter { it.first }.map { it.second }.toList()
 
-private class HealthFormExcelRowMapper : ExcelRowMapper<HealthFormCompleteRecord> {
-    override val dropCount: Int = 3
+private class HealthFormCreateRowMapper : ExcelRowMapper<HealthFormCreateRecord> {
+
+    override val dropCount: Int = 2
+
     override val sheetIndex: Int = 0
 
-    override fun mapRowTo(row: Row): HealthFormCompleteRecord {
-        return HealthFormCompleteRecord(
+    override fun mapRowTo(row: Row): HealthFormCreateRecord {
+        return HealthFormCreateRecord(
             checkDate = row[1],
             name = row[2],
             id = row[6],
             isElder = row[7].isNotEmpty(),
             isHypertension = row[8].isNotEmpty(),
             isDiabetes = row[9].isNotEmpty(),
-            heartRate = row[40],
+
+            heartRate = row[10],
             temperature = randomTemperature(),
             breathRate = randomBreathRate(),
-            rightConstriction = row[43],
-            rightDiastolic = row[44],
-            leftConstriction = row[41],
-            leftDiastolic = row[42],
-            height = row[80],
-            weight = row[81],
-            waistline = row[82],
+            rightConstriction = row[13],
+            rightDiastolic = row[14],
+            leftConstriction = row[11],
+            leftDiastolic = row[12],
+            height = row[16],
+            weight = row[17],
+            waistline = row[18],
+
             leftEye = randomEyeSight(),
             rightEye = randomEyeSight(),
-            hemoglobin = row[59],
-            whiteBloodCell = row[61],
-            platelet = row[62],
-            fastingBloodGlucose = row[51],
-            isEcgNormal = row[78].trim() == "正常",
-            serumAlanineAminotransferase = row[54],
-            serumGlutamicOxalaceticTransaminase = row[55],
-            totalBilirubin = row[57],
-            serumCreatinine = row[72],
-            bloodUreaNitrogen = row[73],
-            totalCholesterol = row[68],
-            triglyceride = row[69],
-            serumLowDensityLipoproteinCholesterol = row[70],
-            serumHighDensityLipoproteinCholesterol = row[71],
-            chestXray = row[74].trim(),
-            bulTrasonic = row[76].trim(),
-            medicine1 = row[229],
-            medicineUse1 = row[230],
-            medicineEachDose1 = row[231],
-            medicineUseDate1 = row[232],
-            medicineYield1 = MedicineYield(row[233]),
-            medicine2 = row[234],
-            medicineUse2 = row[235],
-            medicineEachDose2 = row[236],
-            medicineUseDate2 = row[237],
-            medicineYield2 = MedicineYield(row[238]),
-            medicine3 = row[239],
-            medicineUse3 = row[240],
-            medicineEachDose3 = row[241],
-            medicineUseDate3 = row[242],
-            medicineYield3 = MedicineYield(row[243]),
-            medicine4 = row[244],
-            medicineUse4 = row[245],
-            medicineEachDose4 = row[246],
-            medicineUseDate4 = row[247],
-            medicineYield4 = MedicineYield(row[248]),
-            hasAbnormal = row[165].trim() == "有",
-            abnormality1 = row[166],
-            abnormality2 = row[167],
-            abnormality3 = row[168],
-            abnormality4 = row[169],
-            isPutIntoAdministration = row[216].trim().isNotEmpty(),
-            isSuggestedReview = row[217].trim().isNotEmpty(),
-            isSuggestReferral = row[218].trim().isNotEmpty(),
-            isNeedQuitSmoking = row[219].trim().isNotEmpty(),
-            isNeedHealthDrinking = row[220].trim().isNotEmpty(),
-            isNeedDiet = row[221].trim().isNotEmpty(),
-            isNeedExercise = row[222].trim().isNotEmpty(),
-            isNeedLostWeight = row[223].trim().isNotEmpty(),
-            targetWeight = row[224],
-            isSuggestVaccination = row[225].trim().isNotEmpty(),
-            vaccine = row[226],
-            hasOther = row[227].trim().isNotEmpty(),
-            pjOther = row[228]
+
+            fastingBloodGlucose = row[15],
+
+            medicine1 = row[56],
+            medicineUse1 = row[57],
+            medicineEachDose1 = row[58],
+            medicineUseDate1 = row[59],
+            medicineYield1 = MedicineYield(row[60]),
+            medicine2 = row[61],
+            medicineUse2 = row[62],
+            medicineEachDose2 = row[63],
+            medicineUseDate2 = row[64],
+            medicineYield2 = MedicineYield(row[65]),
+            medicine3 = row[66],
+            medicineUse3 = row[67],
+            medicineEachDose3 = row[68],
+            medicineUseDate3 = row[69],
+            medicineYield3 = MedicineYield(row[70]),
+            medicine4 = row[71],
+            medicineUse4 = row[72],
+            medicineEachDose4 = row[73],
+            medicineUseDate4 = row[74],
+            medicineYield4 = MedicineYield(row[75]),
+            hasAbnormal = row[29].isNotEmpty(),
+            abnormality1 = row[29],
+
+            isPutIntoAdministration = row[45].trim().isNotEmpty(),
+            isSuggestedReview = row[46].trim().isNotEmpty(),
+            isSuggestReferral = row[47].trim().isNotEmpty(),
+            isNeedQuitSmoking = row[48].trim().isNotEmpty(),
+            isNeedHealthDrinking = row[49].trim().isNotEmpty(),
+            isNeedDiet = row[50].trim().isNotEmpty(),
+            isNeedExercise = row[51].trim().isNotEmpty(),
+            isNeedLostWeight = row[52].trim().isNotEmpty(),
+            targetWeight = row[53],
+            hasOther = row[54].trim().isNotEmpty(),
+            pjOther = row[5]
         )
     }
 }

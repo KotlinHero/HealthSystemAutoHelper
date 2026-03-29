@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.business.diabetes.risk.DiabetesRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.form.HealthFormCompleteTask
+import tech.kotlinhero.autohelper.core.business.form.HealthFormCreateTask
 import tech.kotlinhero.autohelper.core.business.task.DiabetesVisitImportTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionVisitImportTask
@@ -113,6 +114,16 @@ class TaskExecuteViewModel : ViewModel() {
     fun startHealthFormCompleteTask(params: UserExcelTaskStartParams) {
         startIndexLogTask(
             HealthFormCompleteTask(
+                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
+                healthSystemAuthentication(params.username, params.password),
+                params.excelPath
+            )
+        )
+    }
+
+    fun startHealthFormCreateTask(params: UserExcelTaskStartParams) {
+        startIndexLogTask(
+            HealthFormCreateTask(
                 browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
                 healthSystemAuthentication(params.username, params.password),
                 params.excelPath

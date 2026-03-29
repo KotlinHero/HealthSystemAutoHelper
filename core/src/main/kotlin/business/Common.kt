@@ -7,6 +7,7 @@ import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.config.HealthSystemWebsiteConfig
 import tech.kotlinhero.autohelper.webdriver.css
 import tech.kotlinhero.autohelper.webdriver.xpath
+import kotlin.time.Duration.Companion.milliseconds
 
 suspend fun WebDriver.loginHealthSystem(
     url: String,
@@ -19,7 +20,7 @@ suspend fun WebDriver.loginHealthSystem(
     css("#select-role").click()
     runCatching {
         xpath("//li[text()='责任医生']").click()
-        delay(100)
+        delay(100.milliseconds)
         xpath("//li[text()='责任医生']").click()
     }
     css("#logon").click()

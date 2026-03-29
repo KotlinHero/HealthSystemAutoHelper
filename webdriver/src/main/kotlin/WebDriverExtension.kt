@@ -19,12 +19,12 @@ inline fun <T> WebDriver.use(block: WebDriver.() -> T): T {
 @DslMarker
 annotation class WebDriverDSL
 
-@WebDriverDSL
+
 fun webDriver(block: WebDriverBuilder.() -> Unit): WebDriver = DefaultWebDriverBuilder().apply { block() }.build()
 
-@WebDriverDSL
+
 fun WebDriver.findElement(block: FindElementConditionBuilder.() -> By): WebElement {
-    return WebDriverWait(this, Duration.ofSeconds(3)).until(
+    return WebDriverWait(this, Duration.ofSeconds(5)).until(
         ExpectedConditions.elementToBeClickable(
             DefaultFindElementConditionBuilder().block()
         )
@@ -33,7 +33,7 @@ fun WebDriver.findElement(block: FindElementConditionBuilder.() -> By): WebEleme
     }
 }
 
-@WebDriverDSL
+
 fun WebDriver.findElements(block: FindElementConditionBuilder.() -> By): List<WebElement> {
     return WebDriverWait(this, Duration.ofSeconds(5)).until(
         ExpectedConditions.presenceOfAllElementsLocatedBy(
@@ -42,57 +42,57 @@ fun WebDriver.findElements(block: FindElementConditionBuilder.() -> By): List<We
     )
 }
 
-@WebDriverDSL
+
 fun WebElement.findElement(block: FindElementConditionBuilder.() -> By): WebElement {
     return findElement(DefaultFindElementConditionBuilder().block())
 }
 
-@WebDriverDSL
+
 fun WebDriver.doubleClick(element: WebElement) {
     Actions(this).doubleClick(element).perform()
 }
 
-@WebDriverDSL
+
 fun WebDriver.doubleClick(block: () -> WebElement) {
     doubleClick(block())
 }
 
-@WebDriverDSL
+
 fun WebDriver.css(css: String) = findElement { css(css) }
 
-@WebDriverDSL
+
 fun WebDriver.css(css: String, block: WebElement.() -> Unit) {
     css(css).block()
 }
 
-@WebDriverDSL
+
 fun WebDriver.allByCss(css: String) = findElements { css(css) }
 
-@WebDriverDSL
+
 fun WebDriver.xpath(xpath: String) = findElement { xpath(xpath) }
 
-@WebDriverDSL
+
 fun WebDriver.firstByXpath(xpath: String) = findElements { xpath(xpath) }.firstOrNull { it.isDisplayed }
 
-@WebDriverDSL
+
 fun WebDriver.name(name: String) = findElement { name(name) }
 
-@WebDriverDSL
+
 fun WebDriver.firstByName(name: String) = findElements { name(name) }.firstOrNull { it.isDisplayed }
 
-@WebDriverDSL
+
 fun WebDriver.name(name: String, block: WebElement.() -> Unit) {
     name(name).block()
 }
 
-@WebDriverDSL
+
 fun WebDriver.xpathByNameWithValue(name: String, value: String): WebElement =
     xpath("//input[@name='${name}'][@value='${value}']")
 
-@WebDriverDSL
+
 fun WebDriver.id(id: String) = findElement { id(id) }
 
-@WebDriverDSL
+
 fun WebElement.clearSendKeys(keys: String) {
     click()
     clear()
@@ -100,17 +100,17 @@ fun WebElement.clearSendKeys(keys: String) {
     sendKeys(keys)
 }
 
-@WebDriverDSL
+
 fun WebElement.selectWhenNotSelected() {
     if (!isSelected) click()
 }
 
-@WebDriverDSL
+
 fun WebElement.sendKeysWhenInputEmpty(keys: String) {
     if (getAttribute("value")?.isEmpty() ?: false) sendKeys(keys)
 }
 
-@WebDriverDSL
+
 fun WebElement.sendKeysWhenValueNotEmpty(keys: String) {
     if (keys.isNotEmpty()) clearSendKeys(keys)
 }

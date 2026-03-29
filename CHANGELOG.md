@@ -10,6 +10,8 @@ My awesome project that provides a lot of useful features, like:
 
 ### Added
 
+- 迁移WPF版新建健康体检表功能
+
 ### Changed
 
 ### Deprecated
@@ -20,7 +22,14 @@ My awesome project that provides a lot of useful features, like:
 
 ### Security
 
-## [1.6.0] - 2026-03-08
+## [1.7.0] - 2026-03-28
+
+### Added
+
+- 完善体检表增加老年人认知功能选项选择
+- 完善体检表增加老年人情感状态选项选择
+
+## 1.6.0 - 2026-03-08
 
 ### Added
 
