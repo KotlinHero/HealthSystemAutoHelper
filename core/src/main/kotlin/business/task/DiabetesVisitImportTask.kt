@@ -64,11 +64,11 @@ class DiabetesVisitImportTask(
         css("input[type='radio'][id^='visitWay_'][value='${visitRecord.visitWay.toOption()}']").click()
         //该下拉框疑似使用网络请求构建，增加延迟等待元素可点击
         css("div[id^='div_sfxz'] > div > img").click()
-        delay(500)
+        delay(500.milliseconds)
         findElements {
             xpath("//div[text()='${visitRecord.visitNature.trim()}']")
         }.let {
-            delay(500)
+            delay(500.milliseconds)
             //未知原因会定位到两个相同的元素，一个元素只需要点击那个元素，两个元素时则需要点击第二个元素
             //即需要点击最后一个元素
             it.last().click()
@@ -119,12 +119,12 @@ class DiabetesVisitImportTask(
         }
         visitRecord.referralReason.takeIf { it.isNotEmpty() }?.let {
             css("div[id^='div_referralReason_'] > div > img").click()
-            delay(300)
+            delay(300.milliseconds)
             //与随访性质情况相同
             findElements {
                 xpath("//*[text() = '连续两次出现空腹血糖控制不满意']")
             }.last().click()
-            delay(300)
+            delay(300.milliseconds)
             css("div[id^='div_referralReason_'] > div > img").click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
@@ -139,11 +139,11 @@ class DiabetesVisitImportTask(
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        delay(300)
+        delay(300.milliseconds)
         runCatching {
             xpath("//*[text() = '取消(F2)']").click()
         }
-        delay(300)
+        delay(300.milliseconds)
         css("button[id='CLOSE']").click()
     }
 
