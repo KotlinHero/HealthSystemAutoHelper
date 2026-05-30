@@ -11,6 +11,7 @@ My awesome project that provides a lot of useful features, like:
 ### Added
 
 - 迁移WPF版新建健康体检表功能
+- 修改转诊医院逻辑
 
 ### Changed
 

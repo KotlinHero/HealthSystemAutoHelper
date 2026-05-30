@@ -12,6 +12,7 @@ import tech.kotlinhero.autohelper.core.excel.toHypertensionVisitRecord
 import tech.kotlinhero.autohelper.core.extension.flowOnDefault
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class HypertensionVisitImportTask(
     private val params: ImportTaskParam
@@ -128,17 +129,17 @@ class HypertensionVisitImportTask(
             }.last().click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
-            delay(300)
+            delay(300.milliseconds)
             css("div[id^='div_agencyAndDept_'] > div > img").click()
-            delay(300)
+            delay(300.milliseconds)
             findElements {
-                xpath("//*[text() = '界牌镇中心卫生院慢病门诊']")
+                xpath("//*[text() = '${it.trim()}']")
             }.last().click()
         }
         findElements {
             xpath("//*[text() = '确定(F1)']")
         }[1].click()
-        delay(2500)
+        delay(2500.milliseconds)
         runCatching {
             xpath("//*[text() = '确定']").click()
         }

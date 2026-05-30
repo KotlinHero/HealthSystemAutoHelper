@@ -62,7 +62,7 @@ private class HealthFormCreateImporter(
         }
         delay(5000.milliseconds)
         firstByXpath("//*[text() = '新建(F2)']")?.click()
-        delay(1000.milliseconds)
+        delay(2000.milliseconds)
         name("checkDate").clearSendKeys(record.checkDate)
 
         delay(1500.milliseconds)
@@ -89,13 +89,13 @@ private class HealthFormCreateImporter(
         if (record.isElder) {
             listOf(
                 "healthStatus" to "1",
-                "selfCare" to "1"
+                "selfCare" to "1",
+                "cognitive" to "1",
+                "emotion" to "1",
             ).forEach { selectWhenNotSelect(it) }
         }
 
         listOf(
-            "cognitive" to "1",
-            "emotion" to "1",
             "physicalExerciseFrequency" to "4",
             "dietaryHabit" to "1",
             "wehtherSmoke" to "1",
@@ -367,7 +367,7 @@ private class HealthFormCreateRowMapper : ExcelRowMapper<HealthFormCreateRecord>
             isNeedLostWeight = row[52].trim().isNotEmpty(),
             targetWeight = row[53],
             hasOther = row[54].trim().isNotEmpty(),
-            pjOther = row[5]
+            pjOther = row[55]
         )
     }
 }

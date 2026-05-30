@@ -12,6 +12,7 @@ import tech.kotlinhero.autohelper.core.excel.toDiabetesRecord
 import tech.kotlinhero.autohelper.core.extension.flowOnDefault
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class DiabetesVisitImportTask(
     val params: ImportTaskParam
@@ -127,12 +128,12 @@ class DiabetesVisitImportTask(
             css("div[id^='div_referralReason_'] > div > img").click()
         }
         visitRecord.agencyAndDept.takeIf { it.isNotEmpty() }?.let {
-            delay(300)
+            delay(300.milliseconds)
             css("div[id^='div_agencyAndDept_'] > div > img").click()
-            delay(300)
+            delay(300.milliseconds)
             //与随访性质情况相同
             findElements {
-                xpath("//*[text() = '界牌镇中心卫生院慢病门诊']")
+                xpath("//*[text() = '${it.trim()}']")
             }.last().click()
         }
         findElements {
