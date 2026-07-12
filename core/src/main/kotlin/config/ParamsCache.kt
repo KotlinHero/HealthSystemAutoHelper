@@ -9,3 +9,8 @@ interface DiabetesParamsCache {
     var diabetesUsername: String
     var diabetesPassword: String
 }
+
+interface ContractParamsCache {
+    var contractUsername: String
+    var contractPassword: String
+}

@@ -12,6 +12,8 @@ import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.business.diabetes.risk.DiabetesRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.form.HealthFormCompleteTask
 import tech.kotlinhero.autohelper.core.business.form.HealthFormCreateTask
+import tech.kotlinhero.autohelper.core.business.task.ContractImportTask
+import tech.kotlinhero.autohelper.core.business.task.ContractSaveTask
 import tech.kotlinhero.autohelper.core.business.task.DiabetesVisitImportTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionVisitImportTask
@@ -128,6 +130,38 @@ class TaskExecuteViewModel : ViewModel() {
                 healthSystemAuthentication(params.username, params.password),
                 params.excelPath
             )
+        )
+    }
+
+    fun startContractImportTask(
+        params: UserExcelTaskStartParams,
+    ) {
+        startIndexLogTask(
+            ContractImportTask(
+                importTaskParam(
+                    AppPreferences.chromeBinaryPath,
+                    AppPreferences.chromeDriverPath,
+                    params.username,
+                    params.password,
+                    params.excelPath
+                )
+            ),
+        )
+    }
+
+    fun startContractSaveTask(
+        params: UserExcelTaskStartParams,
+    ) {
+        startIndexLogTask(
+            ContractSaveTask(
+                importTaskParam(
+                    AppPreferences.chromeBinaryPath,
+                    AppPreferences.chromeDriverPath,
+                    params.username,
+                    params.password,
+                    params.excelPath
+                )
+            ),
         )
     }
 

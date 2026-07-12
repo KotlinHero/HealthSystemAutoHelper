@@ -120,7 +120,7 @@ internal fun randomTemperature(): String = (36.5 + Math.random() * 0.7).let { "%
 /**
  * 60-100随机
  */
-internal fun randomBreathRate(): String = (60 + Math.random() * 40).toInt().toString()
+internal fun randomBreathRate(): String = (16 + Math.random() * 4).toInt().toString()
 
 /**
  * 4.5-4.8随机

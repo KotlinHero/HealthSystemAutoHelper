@@ -13,6 +13,7 @@ import tech.kotlinhero.autohelper.core.extension.flowOnDefault
 import tech.kotlinhero.autohelper.excel.readExcel
 import tech.kotlinhero.autohelper.webdriver.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class HypertensionVisitImportTask(
     private val params: ImportTaskParam
@@ -58,6 +59,7 @@ class HypertensionVisitImportTask(
             css("table[class='x-grid3-row-table']")
         }
         xpath("//*[text() = '高血压随访']").click()
+        delay(1.seconds)
         allByCss("td.x-grid3-col.x-grid3-cell.x-grid3-td-0.x-grid3-cell-first").find { element ->
             element.findElement { xpath("./div") }.text == visitRecord.planDate
         }?.click()

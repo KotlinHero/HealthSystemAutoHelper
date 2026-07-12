@@ -147,6 +147,46 @@ fun TaskMode(
                     )
                 }
             }
+            var showContractImportDialog by remember { mutableStateOf(false) }
+            if (showContractImportDialog) {
+                Dialog(
+                    onDismissRequest = { showContractImportDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.contractUsername,
+                        defaultPassword = AppPreferences.contractPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startContractImportTask(params)
+                            AppPreferences.contractUsername = params.username
+                            AppPreferences.contractPassword = params.password
+                            showContractImportDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("导入签约服务")
+                            }
+                        }
+                    )
+                }
+            }
+            var showContractSaveDialog by remember { mutableStateOf(false) }
+            if (showContractSaveDialog) {
+                Dialog(
+                    onDismissRequest = { showContractSaveDialog = false }
+                ) {
+                    UserExcelTaskStartCard(
+                        defaultUsername = AppPreferences.contractUsername,
+                        defaultPassword = AppPreferences.contractPassword,
+                        onStart = { params ->
+                            taskExecuteViewModel.startContractSaveTask(params)
+                            AppPreferences.contractUsername = params.username
+                            AppPreferences.contractPassword = params.password
+                            showContractSaveDialog = false
+                            scope.launch {
+                                snackBarHostState.showSnackbar("档案保存")
+                            }
+                        }
+                    )
+                }
+            }
 
             TaskModeItem(
                 modeDescription = "导入高血压随访",
@@ -184,6 +224,18 @@ fun TaskMode(
                     showHealthFormCompleteDialog = true
                 }
             )
+            TaskModeItem(
+                modeDescription = "导入签约服务",
+                onCreateClick = {
+                    showContractImportDialog = true
+                }
+            )
+            TaskModeItem(
+                modeDescription = "档案保存",
+                onCreateClick = {
+                    showContractSaveDialog = true
+                }
+            )
         }
     }
 }
@@ -200,7 +252,7 @@ fun UserExcelTaskStartCard(
     var excelPath by remember { mutableStateOf("") }
     var excelFilename by remember { mutableStateOf("") }
     val excelPicker = rememberFilePickerLauncher(
-        type = FileKitType.File(setOf("xlsx"))
+        type = FileKitType.File(setOf("xlsx", "xls"))
     ) { file ->
         excelPath = file?.path ?: ""
         excelFilename = file?.name ?: ""

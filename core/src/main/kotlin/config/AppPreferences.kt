@@ -2,7 +2,7 @@ package tech.kotlinhero.autohelper.core.config
 
 import java.util.prefs.Preferences
 
-object AppPreferences : AppSettings, HyperVisitParamsCache, DiabetesParamsCache {
+object AppPreferences : AppSettings, HyperVisitParamsCache, DiabetesParamsCache, ContractParamsCache {
 
     private val preferences = Preferences.userNodeForPackage(AppSettings::class.java)
 
@@ -25,6 +25,14 @@ object AppPreferences : AppSettings, HyperVisitParamsCache, DiabetesParamsCache 
     override var hyperVisitPassword: String
         get() = preferences.get("hyper_visit_password", "")
         set(value) = preferences.put("hyper_visit_password", value)
+
+    override var contractUsername: String
+        get() = preferences.get("contract_username", "")
+        set(value) = preferences.put("contract_username", value)
+
+    override var contractPassword: String
+        get() = preferences.get("contract_password", "")
+        set(value) = preferences.put("contract_password", value)
 
     override var chromeBinaryPath: String
         get() = preferences.get("chrome_binary", "")
