@@ -53,6 +53,8 @@ internal class DefaultChromeDriverBuilder(
     private fun ChromeOptions.addDefaultArguments() {
         addArguments("--remote-allow-origins=*")
         addArguments("--window-size=1920,1080")
+        addArguments("--no-sandbox")
+        addArguments("--disable-setuid-sandbox")
     }
 
     fun build(): WebDriver = SafeQuitWebDriver(
