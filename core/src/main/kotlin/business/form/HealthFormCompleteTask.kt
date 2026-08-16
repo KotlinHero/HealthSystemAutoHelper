@@ -4,7 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
 import org.apache.poi.ss.usermodel.Row
-import org.openqa.selenium.WebDriver
+import com.microsoft.playwright.Page
 import tech.kotlinhero.autohelper.core.*
 import tech.kotlinhero.autohelper.core.business.loginHealthSystem
 import tech.kotlinhero.autohelper.core.excel.ExcelRowMapper
@@ -13,11 +13,15 @@ import tech.kotlinhero.autohelper.core.task.HealthRecordDescription
 import tech.kotlinhero.autohelper.core.task.HealthRecordImporter
 import tech.kotlinhero.autohelper.core.task.SimpleRecordDescription
 import tech.kotlinhero.autohelper.excel.get
-import tech.kotlinhero.autohelper.webdriver.*
+import tech.kotlinhero.autohelper.webdriver.browserSession
+import tech.kotlinhero.autohelper.webdriver.css
+import tech.kotlinhero.autohelper.webdriver.firstByXpath
+import tech.kotlinhero.autohelper.webdriver.name
+import tech.kotlinhero.autohelper.webdriver.xpath
 import kotlin.time.Duration.Companion.milliseconds
 
 class HealthFormCompleteTask(
-    private val browserDriverConfig: BrowserDriverConfig,
+    private val browserExecutablePath: String,
     private val healthSystemAuthentication: HealthSystemAuthentication,
     private val excelFilePath: String
 ) : ProgressTask {
@@ -25,53 +29,49 @@ class HealthFormCompleteTask(
     override val taskDescription: String = "完善体检表任务"
 
     override fun execute(): Flow<TaskProgress> {
-        val driver = browserDriverConfig.buildWebDriver()
+        val session = browserSession(browserExecutablePath)
         return HealthExcelListProgressTask(
-            driver = driver,
+            page = session.page,
             importer = HealthFormCompleteImporter(
-                driver = driver,
+                page = session.page,
                 authentication = healthSystemAuthentication
             ),
             excelRowMapper = HealthFormExcelRowMapper(),
             excelFilePath = excelFilePath
         ).execute().onCompletion {
-            driver.quit()
+            session.close()
         }
     }
 }
 
 private class HealthFormCompleteImporter(
-    private val driver: WebDriver,
+    private val page: Page,
     private val authentication: HealthSystemAuthentication
 ) : HealthRecordImporter<HealthFormCompleteRecord> {
 
-    override suspend fun prepareImport() = driver.run {
+    override suspend fun prepareImport() = page.run {
         loginHealthSystem(authentication)
         gotoHealthFormListPage()
     }
 
-    override suspend fun importRecord(record: HealthFormCompleteRecord): Unit = driver.run {
-        name("idCard").clearSendKeys(record.id)
+    override suspend fun importRecord(record: HealthFormCompleteRecord): Unit = page.run {
+        name("idCard").fill(record.id)
         css("button.x-btn-text.query").click()
-        doubleClick {
-            css("table[class='x-grid3-row-table']")
-        }
+        css("table[class='x-grid3-row-table']").first().dblclick()
         delay(1000.milliseconds)
-        findElements {
-            xpath("//div[@class='x-grid3-cell-inner x-grid3-col-0']")
-        }.firstOrNull {
-            it.text == record.checkDate
-        }?.click() ?: throw IllegalArgumentException()
+        xpath("//div[@class='x-grid3-cell-inner x-grid3-col-0']").all()
+            .firstOrNull { it.innerText() == record.checkDate }
+            ?.click() ?: throw IllegalArgumentException()
 
         delay(1500.milliseconds)
         record.checkWays.forEach { checkWay ->
-            selectWhenNotSelect("checkWay" to checkWay)
+            selectWhenNotChecked("checkWay" to checkWay)
         }
-        selectWhenNotSelect("symptom" to "01")
+        selectWhenNotChecked("symptom" to "01")
         listOf(
             "temperature" to record.temperature,
             "breathe" to record.breathRate
-        ).forEach { sendKeysWhenInputEmpty(it) }
+        ).forEach { fillWhenInputEmpty(it) }
 
         listOf(
             "pulse" to record.heartRate,
@@ -82,13 +82,13 @@ private class HealthFormCompleteImporter(
             "height" to record.height,
             "weight" to record.weight,
             "waistline" to record.waistline
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
+        ).forEach { fillWhenValueNotEmpty(it) }
 
         if (record.isElder) {
             listOf(
                 "healthStatus" to "1",
                 "selfCare" to "1"
-            ).forEach { selectWhenNotSelect(it) }
+            ).forEach { selectWhenNotChecked(it) }
         }
 
         listOf(
@@ -107,7 +107,7 @@ private class HealthFormCompleteImporter(
         listOf(
             "leftEye" to record.leftEye,
             "rightEye" to record.rightEye
-        ).forEach { sendKeysWhenInputEmpty(it) }
+        ).forEach { fillWhenInputEmpty(it) }
 
         listOf(
             "hearing" to "1",
@@ -120,7 +120,7 @@ private class HealthFormCompleteImporter(
             "rales" to "1",
         ).forEach { selectOptionWhenAllNoSelected(it) }
 
-        sendKeysWhenValueNotEmpty("heartRate" to record.heartRate)
+        fillWhenValueNotEmpty("heartRate" to record.heartRate)
         listOf(
             "rhythm" to "1",
             "heartMurmur" to "1"
@@ -136,18 +136,18 @@ private class HealthFormCompleteImporter(
         ).forEach { selectOptionWhenAllNoSelected(it) }
 
         if (record.isDiabetes) {
-            selectWhenNotSelect("footPulse" to "2")
+            selectWhenNotChecked("footPulse" to "2")
         }
 
         listOf(
             "hgb" to record.hemoglobin,
             "wbc" to record.whiteBloodCell,
             "platelet" to record.platelet
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
+        ).forEach { fillWhenValueNotEmpty(it) }
 
-        sendKeysWhenInputEmpty("fbs" to record.fastingBloodGlucose)
+        fillWhenInputEmpty("fbs" to record.fastingBloodGlucose)
 
-        selectWhenNotSelect("ecg" to if (record.isEcgNormal) "1" else "2")
+        selectWhenNotChecked("ecg" to if (record.isEcgNormal) "1" else "2")
 
         listOf(
             "alt" to record.serumAlanineAminotransferase,
@@ -159,13 +159,13 @@ private class HealthFormCompleteImporter(
             "tg" to record.triglyceride,
             "ldl" to record.serumLowDensityLipoproteinCholesterol,
             "hdl" to record.serumHighDensityLipoproteinCholesterol
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
+        ).forEach { fillWhenValueNotEmpty(it) }
 
         if (record.chestXray.isNotEmpty()) {
-            selectWhenNotSelect("x" to if (record.chestXray == "正常") "1" else "2")
+            selectWhenNotChecked("x" to if (record.chestXray == "正常") "1" else "2")
         }
         if (record.bulTrasonic.isNotEmpty()) {
-            selectWhenNotSelect("b" to if (record.bulTrasonic == "正常") "1" else "2")
+            selectWhenNotChecked("b" to if (record.bulTrasonic == "正常") "1" else "2")
         }
 
         listOf(
@@ -179,10 +179,10 @@ private class HealthFormCompleteImporter(
 
         val otherDiseases = record.otherDiseases
         if (otherDiseases.isNotEmpty()) {
-            selectWhenNotSelect("otherDiseasesone" to "2")
-            sendKeysWhenValueNotEmpty("otherDiseasesoneDesc" to otherDiseases)
+            selectWhenNotChecked("otherDiseasesone" to "2")
+            fillWhenValueNotEmpty("otherDiseasesoneDesc" to otherDiseases)
         } else {
-            selectWhenNotSelect("otherDiseasesone" to "1")
+            selectWhenNotChecked("otherDiseasesone" to "1")
         }
 
         delay(500.milliseconds)
@@ -191,7 +191,7 @@ private class HealthFormCompleteImporter(
             "inhospitalFlag" to "n",
             "infamilybedFlag" to "n",
             "medicineFlag" to record.medicineFlag
-        ).forEach { selectWhenNotSelect(it) }
+        ).forEach { selectWhenNotChecked(it) }
 
         val medicineElementSuffix = getMedicineElementSuffix()
         listOf(
@@ -211,7 +211,7 @@ private class HealthFormCompleteImporter(
             "use_4" to record.medicineUse4,
             "useDate_4" to record.medicineUseDate4,
             "eachDose_4" to record.medicineEachDose4,
-        ).forEach { sendKeysWhenValueNotEmpty(it) }
+        ).forEach { fillWhenValueNotEmpty(it) }
 
         listOf(
             "medicineYield1" to record.medicineYield1,
@@ -220,41 +220,41 @@ private class HealthFormCompleteImporter(
             "medicineYield4" to record.medicineYield4,
         ).forEach { pair ->
             pair.second.option()?.let { option ->
-                selectWhenNotSelect(pair.first to option)
+                selectWhenNotChecked(pair.first to option)
             }
         }
 
-        selectWhenNotSelect("nonimmuneFlag" to "n")
+        selectWhenNotChecked("nonimmuneFlag" to "n")
 
         if (record.hasAbnormal) {
-            selectWhenNotSelect("abnormality" to "2")
+            selectWhenNotChecked("abnormality" to "2")
             listOf(
                 "abnormality1" to record.abnormality1,
                 "abnormality2" to record.abnormality2,
                 "abnormality3" to record.abnormality3,
                 "abnormality4" to record.abnormality4
             ).forEach {
-                sendKeysWhenValueNotEmpty(it)
+                fillWhenValueNotEmpty(it)
             }
         } else {
-            selectWhenNotSelect("abnormality" to "1")
+            selectWhenNotChecked("abnormality" to "1")
         }
 
         record.manas.forEach {
-            selectWhenNotSelect("mana" to it)
+            selectWhenNotChecked("mana" to it)
         }
 
         record.riskControls.forEach {
-            selectWhenNotSelect("riskfactorsControl" to it)
+            selectWhenNotChecked("riskfactorsControl" to it)
         }
         if (record.isNeedLostWeight) {
-            sendKeysWhenValueNotEmpty("targetWeight" to record.targetWeight)
+            fillWhenValueNotEmpty("targetWeight" to record.targetWeight)
         }
         if (record.isSuggestVaccination) {
-            sendKeysWhenValueNotEmpty("vaccine" to record.vaccine)
+            fillWhenValueNotEmpty("vaccine" to record.vaccine)
         }
         if (record.hasOther) {
-            sendKeysWhenValueNotEmpty("pjOther" to record.pjOther)
+            fillWhenValueNotEmpty("pjOther" to record.pjOther)
         }
 
         firstByXpath("//*[text() = '确定(F1)']")?.click()

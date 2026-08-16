@@ -34,11 +34,14 @@ object AppPreferences : AppSettings, HyperVisitParamsCache, DiabetesParamsCache,
         get() = preferences.get("contract_password", "")
         set(value) = preferences.put("contract_password", value)
 
-    override var chromeBinaryPath: String
-        get() = preferences.get("chrome_binary", "")
-        set(value) = preferences.put("chrome_binary", value)
-
-    override var chromeDriverPath: String
-        get() = preferences.get("chrome_driver", "")
-        set(value) = preferences.put("chrome_driver", value)
+    override var browserExecutablePath: String
+        get() {
+            val newValue = preferences.get("browser_executable_path", "")
+            if (newValue.isNotEmpty()) return newValue
+            // 兼容旧版 chrome_binary 配置
+            return preferences.get("chrome_binary", "")
+        }
+        set(value) {
+            preferences.put("browser_executable_path", value)
+        }
 }

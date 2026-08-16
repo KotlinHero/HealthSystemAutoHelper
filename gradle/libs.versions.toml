@@ -5,7 +5,7 @@ composeMultiplatform = "1.8.2"
 junit = "4.13.2"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
-selenium = "4.36.0"
+playwright = "1.62.0"
 poi = "5.4.1"
 androidx-navigation = "2.9.0-beta04"
 changelog = "2.4.0"
@@ -23,9 +23,7 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 androidx-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
 
-selenium-api = { module = "org.seleniumhq.selenium:selenium-api", version.ref = "selenium" }
-selenium-java = { module = "org.seleniumhq.selenium:selenium-java", version.ref = "selenium" }
-selenium-chromedriver = { module = "org.seleniumhq.selenium:selenium-chrome-driver", version.ref = "selenium" }
+playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
 

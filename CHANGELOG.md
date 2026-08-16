@@ -16,6 +16,8 @@ My awesome project that provides a lot of useful features, like:
 
 ### Changed
 
+- 浏览器自动化由 Selenium 替换为 Playwright，移除 ChromeDriver 配置
+
 ### Deprecated
 
 ### Removed

@@ -1,7 +1,7 @@
 package tech.kotlinhero.autohelper.core.business
 
+import com.microsoft.playwright.Page
 import kotlinx.coroutines.delay
-import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.HealthSystemAuthentication
 import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.config.HealthSystemWebsiteConfig
@@ -9,34 +9,34 @@ import tech.kotlinhero.autohelper.webdriver.css
 import tech.kotlinhero.autohelper.webdriver.xpath
 import kotlin.time.Duration.Companion.milliseconds
 
-suspend fun WebDriver.loginHealthSystem(
+suspend fun Page.loginHealthSystem(
     url: String,
     username: String,
     password: String,
 ) {
-    get(url)
-    css("#ext-comp-1001").sendKeys(username)
-    css("#pwd").sendKeys(password)
+    navigate(url)
+    css("#ext-comp-1001").fill(username)
+    css("#pwd").fill(password)
     css("#select-role").click()
     runCatching {
-        xpath("//li[text()='责任医生']").click()
+        xpath("//li[text()='责任医生']").first().click()
         delay(100.milliseconds)
-        xpath("//li[text()='责任医生']").click()
+        xpath("//li[text()='责任医生']").first().click()
     }
     css("#logon").click()
 }
 
-suspend fun WebDriver.loginHealthSystem(
+suspend fun Page.loginHealthSystem(
     healthSystemAuthentication: HealthSystemAuthentication,
     url: String = AppPreferences.healthSystemWebsiteUrl,
 ) {
     loginHealthSystem(url, healthSystemAuthentication.username, healthSystemAuthentication.password)
 }
 
-suspend fun WebDriver.loginHealthSystem(
+suspend fun Page.loginHealthSystem(
     username: String,
     password: String,
-    config: HealthSystemWebsiteConfig = AppPreferences
+    config: HealthSystemWebsiteConfig = AppPreferences,
 ) {
     loginHealthSystem(config.healthSystemWebsiteUrl, username, password)
 }

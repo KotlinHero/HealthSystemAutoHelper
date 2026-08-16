@@ -1,7 +1,15 @@
 package tech.kotlinhero.autohelper.core.business.form
 
-import org.openqa.selenium.WebDriver
-import tech.kotlinhero.autohelper.webdriver.*
+import com.microsoft.playwright.Page
+import tech.kotlinhero.autohelper.webdriver.allByCss
+import tech.kotlinhero.autohelper.webdriver.byNameValue
+import tech.kotlinhero.autohelper.webdriver.css
+import tech.kotlinhero.autohelper.webdriver.fillWhenInputEmpty
+import tech.kotlinhero.autohelper.webdriver.fillWhenNotEmpty
+import tech.kotlinhero.autohelper.webdriver.id
+import tech.kotlinhero.autohelper.webdriver.name
+import tech.kotlinhero.autohelper.webdriver.selectWhenNotChecked
+import tech.kotlinhero.autohelper.webdriver.xpath
 
 interface HealthForm {
     val checkDate: String
@@ -90,26 +98,23 @@ val HealthForm.checkWays: List<String>
         if (isDiabetes) "4" else null
     )
 
-internal fun WebDriver.selectOptionWhenAllNoSelected(nameValuePair: Pair<String, String>) {
-    findElements { name(nameValuePair.first) }.none {
-        it.isSelected
-    }.let {
-        if (it) {
-            selectWhenNotSelect(nameValuePair)
-        }
+internal fun Page.selectOptionWhenAllNoSelected(nameValuePair: Pair<String, String>) {
+    val locators = name(nameValuePair.first).all()
+    if (locators.none { it.isChecked }) {
+        selectWhenNotChecked(nameValuePair)
     }
 }
 
-internal fun WebDriver.sendKeysWhenInputEmpty(nameValuePair: Pair<String, String>) {
-    name(nameValuePair.first).sendKeysWhenInputEmpty(nameValuePair.second)
+internal fun Page.fillWhenInputEmpty(nameValuePair: Pair<String, String>) {
+    name(nameValuePair.first).fillWhenInputEmpty(nameValuePair.second)
 }
 
-internal fun WebDriver.sendKeysWhenValueNotEmpty(nameValuePair: Pair<String, String>) {
-    name(nameValuePair.first).sendKeysWhenValueNotEmpty(nameValuePair.second)
+internal fun Page.fillWhenValueNotEmpty(nameValuePair: Pair<String, String>) {
+    name(nameValuePair.first).fillWhenNotEmpty(nameValuePair.second)
 }
 
-internal fun WebDriver.selectWhenNotSelect(nameValuePair: Pair<String, String>) {
-    xpathByNameWithValue(nameValuePair.first, nameValuePair.second).selectWhenNotSelected()
+internal fun Page.selectWhenNotChecked(nameValuePair: Pair<String, String>) {
+    byNameValue(nameValuePair.first, nameValuePair.second).selectWhenNotChecked()
 }
 
 /**
@@ -127,20 +132,18 @@ internal fun randomBreathRate(): String = (16 + Math.random() * 4).toInt().toStr
  */
 internal fun randomEyeSight(): String = (4.5 + Math.random() * 0.3).let { "%.1f".format(it) }
 
-context(driver: WebDriver)
-internal fun gotoHealthFormListPage() = driver.run {
+fun Page.gotoHealthFormListPage() {
     id("HR").click()
     id("WL_module_D20").click()
-    allByCss("img.x-form-trigger.x-form-arrow-trigger").getOrNull(0)?.click()
+    allByCss("img.x-form-trigger.x-form-arrow-trigger").firstOrNull()?.click()
     css("html > body > div:nth-of-type(8) > div > div:nth-of-type(6)").click()
 }
 
-context(driver: WebDriver)
-internal fun getMedicineElementSuffix(): String {
+fun Page.getMedicineElementSuffix(): String {
     val prefix = "medicine_1_"
-    return driver.findElements {
-        xpath("//*[contains(@name, '${prefix}')]")
-    }.first().getAttribute("name")?.let {
-        it.substring(prefix.length, it.length)
-    } ?: ""
+    return xpath("//*[contains(@name, '${prefix}')]")
+        .first()
+        .getAttribute("name")
+        ?.substringAfter(prefix)
+        .orEmpty()
 }

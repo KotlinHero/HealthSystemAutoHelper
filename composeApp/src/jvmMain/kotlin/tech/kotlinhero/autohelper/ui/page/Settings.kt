@@ -1,12 +1,20 @@
 package tech.kotlinhero.autohelper.ui.page
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,16 +40,10 @@ fun Settings() {
                 label = { Text("卫生健康信息系统网址") }
             )
             FilePickerTextFieldSetting(
-                value = appSettings.chromeBinaryPath,
-                onValueChange = { appSettings.chromeBinaryPath = it },
-                label = "谷歌浏览器执行文件"
+                value = appSettings.browserExecutablePath,
+                onValueChange = { appSettings.browserExecutablePath = it },
+                label = "浏览器可执行文件（可选，留空使用内置 Chromium）"
             )
-            FilePickerTextFieldSetting(
-                value = appSettings.chromeDriverPath,
-                onValueChange = { appSettings.chromeDriverPath = it },
-                label = "谷歌浏览器驱动文件"
-            )
-
         }
     }
 }
@@ -82,8 +84,7 @@ fun FilePickerTextFieldSetting(
 }
 
 class AppSettingsState : AppSettings {
-    private var chromeBinaryPathState by mutableStateOf(AppPreferences.chromeBinaryPath)
-    private var chromeDriverPathState by mutableStateOf(AppPreferences.chromeDriverPath)
+    private var browserExecutablePathState by mutableStateOf(AppPreferences.browserExecutablePath)
     private var healthSystemWebsiteUrlState by mutableStateOf(AppPreferences.healthSystemWebsiteUrl)
 
     override var healthSystemWebsiteUrl: String
@@ -93,17 +94,10 @@ class AppSettingsState : AppSettings {
             AppPreferences.healthSystemWebsiteUrl = value
         }
 
-    override var chromeBinaryPath: String
-        get() = chromeBinaryPathState
+    override var browserExecutablePath: String
+        get() = browserExecutablePathState
         set(value) {
-            chromeBinaryPathState = value
-            AppPreferences.chromeBinaryPath = value
-        }
-
-    override var chromeDriverPath: String
-        get() = chromeDriverPathState
-        set(value) {
-            chromeDriverPathState = value
-            AppPreferences.chromeDriverPath = value
+            browserExecutablePathState = value
+            AppPreferences.browserExecutablePath = value
         }
 }

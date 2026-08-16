@@ -69,6 +69,14 @@ interface InjectedExecOps {
 }
 
 afterEvaluate {
+    if (project.properties["app.bind"].toString().toBoolean()) {
+        listOf("packageMsi", "packageDmg", "packageDeb").forEach { taskName ->
+            tasks.matching { it.name == taskName }.configureEach {
+                dependsOn(":webdriver:installPlaywrightChromium")
+            }
+        }
+    }
+
     val outputDir: String = layout.buildDirectory.dir("compose/binaries/main/msi").get()
         .asFile
         .absolutePath

@@ -63,11 +63,10 @@ class TaskExecuteViewModel : ViewModel() {
         startIndexLogTask(
             HypertensionVisitImportTask(
                 importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
+                    browserExecutablePath = AppPreferences.browserExecutablePath,
+                    username = params.username,
+                    password = params.password,
+                    excelPath = params.excelPath
                 )
             ),
         )
@@ -79,11 +78,10 @@ class TaskExecuteViewModel : ViewModel() {
         startIndexLogTask(
             DiabetesVisitImportTask(
                 importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
+                    browserExecutablePath = AppPreferences.browserExecutablePath,
+                    username = params.username,
+                    password = params.password,
+                    excelPath = params.excelPath
                 )
             ),
         )
@@ -94,9 +92,9 @@ class TaskExecuteViewModel : ViewModel() {
     ) {
         startIndexLogTask(
             HypertensionRiskStratificationTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
+                browserExecutablePath = AppPreferences.browserExecutablePath,
+                healthSystemAuthentication = healthSystemAuthentication(params.username, params.password),
+                excelFilePath = params.excelPath
             )
         )
     }
@@ -106,9 +104,9 @@ class TaskExecuteViewModel : ViewModel() {
     ) {
         startIndexLogTask(
             DiabetesRiskStratificationTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
+                browserExecutablePath = AppPreferences.browserExecutablePath,
+                healthSystemAuthentication = healthSystemAuthentication(params.username, params.password),
+                excelFilePath = params.excelPath
             )
         )
     }
@@ -116,9 +114,9 @@ class TaskExecuteViewModel : ViewModel() {
     fun startHealthFormCompleteTask(params: UserExcelTaskStartParams) {
         startIndexLogTask(
             HealthFormCompleteTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
+                browserExecutablePath = AppPreferences.browserExecutablePath,
+                healthSystemAuthentication = healthSystemAuthentication(params.username, params.password),
+                excelFilePath = params.excelPath
             )
         )
     }
@@ -126,9 +124,9 @@ class TaskExecuteViewModel : ViewModel() {
     fun startHealthFormCreateTask(params: UserExcelTaskStartParams) {
         startIndexLogTask(
             HealthFormCreateTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
+                browserExecutablePath = AppPreferences.browserExecutablePath,
+                healthSystemAuthentication = healthSystemAuthentication(params.username, params.password),
+                excelFilePath = params.excelPath
             )
         )
     }
@@ -139,11 +137,10 @@ class TaskExecuteViewModel : ViewModel() {
         startIndexLogTask(
             ContractImportTask(
                 importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
+                    browserExecutablePath = AppPreferences.browserExecutablePath,
+                    username = params.username,
+                    password = params.password,
+                    excelPath = params.excelPath
                 )
             ),
         )
@@ -155,11 +152,10 @@ class TaskExecuteViewModel : ViewModel() {
         startIndexLogTask(
             ContractSaveTask(
                 importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
+                    browserExecutablePath = AppPreferences.browserExecutablePath,
+                    username = params.username,
+                    password = params.password,
+                    excelPath = params.excelPath
                 )
             ),
         )
