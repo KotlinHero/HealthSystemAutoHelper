@@ -42,16 +42,20 @@ kotlin {
 }
 
 
+val appPackageName: String = providers.gradleProperty("app.package.name").get()
+val appVersion: String = providers.gradleProperty("app.version").get()
+val appBind: Boolean = providers.gradleProperty("app.bind").get().toBoolean()
+
 compose.desktop {
     application {
         mainClass = "tech.kotlinhero.autohelper.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = project.properties["app.package.name"].toString()
-            packageVersion = project.properties["app.version"].toString()
+            packageName = appPackageName
+            packageVersion = appVersion
             includeAllModules = true
-            if (project.properties["app.bind"].toString().toBoolean()) {
+            if (appBind) {
                 appResourcesRootDir.set(project.layout.projectDirectory.dir("bin"))
             }
             windows {
