@@ -80,7 +80,7 @@ webdriver/    # 自研 Selenium DSL：webDriver {} builder + WebDriver 扩展函
 
 环境注意事项：
 
-- **网络**：`gradle/wrapper/gradle-wrapper.properties` 指向腾讯镜像（直连 services.gradle.org 会超时）；[gradle.properties](gradle.properties) 内配置了 `127.0.0.1:7897` 代理；本机 `~/.gradle/init.d/oneday-mirrors.gradle` 用 Groovy `url = '...'` 写法（Gradle 9 起空格赋值已废弃）。
+- **网络**：`gradle/wrapper/gradle-wrapper.properties` 指向腾讯镜像（直连 services.gradle.org 会超时）；依赖坐标由本机 `~/.gradle/init.d/oneday-mirrors.gradle` 重写到阿里云镜像（Groovy 用 `url = '...'` 写法，Gradle 9 起空格赋值已废弃）；[gradle.properties](gradle.properties) 里的 `systemProp.*.proxy*` 默认注释掉，需要代理时按本机端口自行启用。
 - **配置缓存**已开启（`org.gradle.configuration-cache=true`）。构建脚本中：
   - 禁止 `project.properties["x"]`（Gradle 10 移除），改用 `providers.gradleProperty("x")`；
   - 禁止 `val task: X by tasks` 委托（Gradle 10 移除），改用 `tasks.named<X>("task") { ... }`。

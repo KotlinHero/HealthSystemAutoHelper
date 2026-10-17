@@ -1,4 +1,3 @@
-import org.jetbrains.changelog.ChangelogSectionUrlBuilder
 import org.jetbrains.changelog.date
 
 plugins {
@@ -12,36 +11,19 @@ plugins {
     alias(libs.plugins.changelog)
 }
 
-val projectVersion = project.property("app.version").toString()
-val packaging = project.property("app.package.name").toString()
-val appBind = project.property("app.bind").toString().toBoolean()
-
-ext {
-    set("app.version", projectVersion)
-    set("app.package.name", packaging)
-    set("app.bind", appBind)
-}
+val projectVersion = providers.gradleProperty("app.version").get()
 
 changelog {
     version = projectVersion
     path = file("CHANGELOG.md").canonicalPath
     header = provider { "[${version.get()}] - ${date()}" }
-    introduction =
-        """
-        My awesome project that provides a lot of useful features, like:
-        
-        - Feature 1
-        - Feature 2
-        - and Feature 3
-        """.trimIndent()
+    introduction = provider { "卫生信息系统自动助手（AutoHelper）的版本变更记录，格式基于 Keep a Changelog。" }
     itemPrefix = "-"
     keepUnreleasedSection = true
     unreleasedTerm = "[Unreleased]"
     groups = listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")
     lineSeparator = "\n"
     combinePreReleases = true
-    sectionUrlBuilder = ChangelogSectionUrlBuilder { repositoryUrl, currentVersion, previousVersion, isUnreleased ->
-        "foo"
-    }
+    repositoryUrl = "https://github.com/KotlinHero/HealthSystemAutoHelper"
     outputFile = file("release-note.txt")
 }

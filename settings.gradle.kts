@@ -34,5 +34,5 @@ plugins {
 
 include(":composeApp")
 include(":webdriver")
-include("excel")
-include("core")
+include(":excel")
+include(":core")
