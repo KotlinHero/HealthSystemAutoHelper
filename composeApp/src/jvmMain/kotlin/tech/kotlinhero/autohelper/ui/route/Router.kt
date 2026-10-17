@@ -2,6 +2,7 @@ package tech.kotlinhero.autohelper.ui.route
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -23,5 +24,5 @@ enum class NavigationRouter(
 object TaskExecuteRouterItem : RouterItem {
     override val route: String = "execute"
     override val label: String = "任务执行"
-    override val icon: ImageVector = Icons.Filled.GridView
+    override val icon: ImageVector = Icons.Filled.PlayArrow
 }
