@@ -1,5 +1,6 @@
 package tech.kotlinhero.autohelper.core.business
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import org.openqa.selenium.WebDriver
 import tech.kotlinhero.autohelper.core.HealthSystemAuthentication
@@ -18,10 +19,14 @@ suspend fun WebDriver.loginHealthSystem(
     css("#ext-comp-1001").sendKeys(username)
     css("#pwd").sendKeys(password)
     css("#select-role").click()
-    runCatching {
+    try {
         xpath("//li[text()='责任医生']").click()
         delay(100.milliseconds)
         xpath("//li[text()='责任医生']").click()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        // 角色下拉框尚未展开或选项已默认选中时点击会失败，继续走登录按钮即可
     }
     css("#logon").click()
 }

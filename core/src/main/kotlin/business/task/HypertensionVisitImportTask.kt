@@ -1,5 +1,6 @@
 package tech.kotlinhero.autohelper.core.business.task
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import org.openqa.selenium.WebDriver
@@ -26,27 +27,25 @@ class HypertensionVisitImportTask(
             readExcel(params.excelPath) {
                 val sheet = getSheetAt(1)
                 val headRowCount = 1
-                emitTotalCount(sheet.lastRowNum)
+                val rows = sheet.drop(headRowCount).toList()
+                emitTotalCount(rows.size)
                 emitLog("正在登录系统准备导入")
                 prepareImport()
-                sheet.drop(headRowCount).forEachIndexed { rowIndex, row ->
+                rows.forEachIndexed { rowIndex, row ->
                     val visitRecord = row.toHypertensionVisitRecord()
                     val currentDataIdentifier = "${visitRecord.name}-${visitRecord.id}"
                     emitLog("开始导入：$currentDataIdentifier")
-                    runCatching {
+                    try {
                         importHyperVisitRecord(visitRecord)
-                    }.fold(
-                        onSuccess = {
-                            emitLog("导入成功：$currentDataIdentifier")
-                            emitProgressUpdate(rowIndex + 1)
-                        },
-                        onFailure = {
-                            emitLog("导入失败：$currentDataIdentifier")
-                            it.printStackTrace()
-                            emitProgressUpdate(rowIndex + 1)
-                            prepareImport()
-                        }
-                    )
+                        emitLog("导入成功：$currentDataIdentifier")
+                        emitProgressUpdate(rowIndex + 1)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        emitLog("导入失败：$currentDataIdentifier（${e.javaClass.simpleName}: ${e.message}）")
+                        emitProgressUpdate(rowIndex + 1)
+                        prepareImport()
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package tech.kotlinhero.autohelper.core.business.task
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -35,12 +36,14 @@ class HypertensionRiskStratificationTask(
             }
             emitTotalCount(records.size)
             records.forEachIndexed { index, record ->
-                runCatching {
-                    emitProgressUpdate(index)
+                try {
                     importRecord(record)
-                }.onFailure {
-                    it.printStackTrace()
-                    emitLog("导入失败:${record.id}-${record.name}")
+                    emitProgressUpdate(index + 1)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    emitLog("导入失败:${record.id}-${record.name}（${e.javaClass.simpleName}: ${e.message}）")
+                    emitProgressUpdate(index + 1)
                     prepareImport()
                 }
             }
