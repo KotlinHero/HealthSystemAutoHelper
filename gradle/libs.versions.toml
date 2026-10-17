@@ -1,17 +1,19 @@
 [versions]
-androidx-lifecycle = "2.9.1"
+androidx-lifecycle = "2.11.0"
+compose = "1.12.2"
 composeHotReload = "1.3.0-beta02"
-composeMultiplatform = "1.9.3"
+composeMaterial3 = "1.12.0-alpha03"
+composeMaterialIcons = "1.7.3"
 junit = "4.13.2"
-kotlin = "2.3.21"
-kotlinx-coroutines = "1.10.2"
-selenium = "4.36.0"
-poi = "5.4.1"
-androidx-navigation = "2.9.0-beta04"
-changelog = "2.4.0"
-filekit = "0.10.0"
-koin = "4.1.0"
-arrow = "2.1.2"
+kotlin = "2.4.21"
+kotlinx-coroutines = "1.11.0"
+selenium = "4.51.0"
+poi = "5.5.1"
+androidx-navigation = "2.10.0-rc01"
+changelog = "2.5.0"
+filekit = "0.16.0"
+koin = "4.2.2"
+arrow = "2.2.3"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -22,6 +24,18 @@ androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecyc
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 androidx-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
+
+# Compose Multiplatform 依赖：CMP 1.10 起 Gradle 插件里的 compose.* 访问器已废弃，统一用显式坐标
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "composeMaterialIcons" }
+# Compose Desktop：本仓库只发布 Windows x64（MSI + 内置 chromedriver），故直接引用 OS 专用聚合包；
+# macOS/Linux 打包需换成对应的 desktop-jvm-<os>-<arch> 坐标
+compose-desktop = { module = "org.jetbrains.compose.desktop:desktop-jvm-windows-x64", version.ref = "compose" }
 
 selenium-api = { module = "org.seleniumhq.selenium:selenium-api", version.ref = "selenium" }
 selenium-java = { module = "org.seleniumhq.selenium:selenium-java", version.ref = "selenium" }
@@ -38,11 +52,9 @@ koin-compose-viewmodel-navigation = { module = "io.insert-koin:koin-compose-view
 
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 
-
-
 [plugins]
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
-composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
 }
@@ -19,9 +17,4 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(17)
-}
-tasks.named<KotlinCompile>("compileKotlin") {
-    compilerOptions {
-        freeCompilerArgs.set(listOf("-Xcontext-parameters"))
-    }
 }

@@ -15,6 +15,10 @@
 
 ### Changed
 
+- 升级构建工具链与依赖：Kotlin 2.4.21、Compose Multiplatform 1.12.2（Material3 1.12.0-alpha03）、compose-hot-reload 1.3.0-beta02、Selenium 4.51.0、Apache POI 5.5.1、coroutines 1.11.0、lifecycle 2.11.0、navigation 2.10.0-rc01、filekit 0.16.0、kotlinx-changelog 2.5.0
+- Compose 依赖改用版本目录显式坐标（`libs.compose.*`），桌面运行时改用 `desktop-jvm-windows-x64`，并移除已废弃的 `compose.*` 访问器
+- Kotlin 2.4 起 context parameters 稳定，移除 `-Xcontext-parameters` 编译参数
+
 ### Deprecated
 
 ### Removed

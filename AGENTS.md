@@ -21,17 +21,23 @@
 
 | 组件 | 版本 |
 | --- | --- |
-| Kotlin | 2.3.21 |
-| Compose Multiplatform | 1.9.3（Compose Compiler 随 Kotlin） |
-| compose-hot-reload | 1.3.0-beta02（预发布，仅开发期热重载） |
+| Kotlin | 2.4.21（context parameters 已稳定，无需 `-Xcontext-parameters`） |
+| Compose Multiplatform | 1.12.2（Compose Compiler 随 Kotlin） |
+| Compose Material3 | 1.12.0-alpha03（CMP 的 material3 与 CMP 版本解耦，独立发版） |
+| compose material-icons-extended | 1.7.3（官方已冻结，不随 CMP 升级） |
+| compose-hot-reload | 1.3.0-beta02（预发布；CMP 1.10+ 会内置 1.2.0，显式声明本版本以覆盖内置版本） |
 | Gradle Wrapper | 9.8.1 |
 | JDK Toolchain | 17（`jvmToolchain(17)`，foojay resolver 可自动下载） |
-| Selenium | 4.36.0 |
-| Apache POI | 5.4.1 |
-| kotlinx-coroutines | 1.10.2 |
-| androidx navigation-compose | 2.9.0-beta04 |
-| filekit（文件选择器） | 0.10.0 |
-| JUnit | 4.13.2 |
+| Selenium | 4.51.0 |
+| Apache POI | 5.5.1 |
+| kotlinx-coroutines | 1.11.0 |
+| androidx lifecycle | 2.11.0 |
+| androidx navigation-compose | 2.10.0-rc01 |
+| filekit（文件选择器） | 0.16.0 |
+| kotlinx-changelog | 2.5.0 |
+| JUnit | 4.13.2（另有 koin 4.2.2、arrow 2.2.3 仅声明未使用） |
+
+> Compose 依赖统一走版本目录里的显式坐标（`libs.compose.*`），不要再用插件提供的 `compose.runtime` / `compose.desktop.currentOs` 等访问器——CMP 1.10 起它们已废弃。桌面运行时依赖是 `org.jetbrains.compose.desktop:desktop-jvm-windows-x64`（聚合 `desktop` 不含 skiko native，直接引用会在启动时抛 `skiko-windows-x64.dll not found`）。
 
 > `koin-core`、`arrow-core` 只在版本目录中声明，**代码里并未使用**（没有 DI 容器，ViewModel 用 `viewModel { }` 直接创建），不要假设它们可用来设计架构。
 
@@ -132,7 +138,7 @@ webDriver { chrome { driver(driverPath); binary(browserBinaryPath); silent() } }
 
 - `composeApp` 的 `commonMain` 为空：桌面专有代码全部放 `jvmMain`，Compose 资源放 `src/jvmMain/composeResources/`。
 - [composeApp/build.gradle.kts](composeApp/build.gradle.kts) 的 `afterEvaluate { ... packageMsi ... }` 会用 `cmd /c start explorer` 打开产物目录，非 Windows 平台打包时需留意。
-- `commonMain` 依赖 `compose.materialIconsExtended`；jvmMain 依赖 `compose.desktop.currentOs` 时**刻意排除** `material-desktop`（统一只用 material3），改依赖时不要把这行排除删掉。
+- Compose 依赖使用版本目录里的显式坐标：`commonMain` 用 `libs.compose.runtime/foundation/material3/material.icons.extended/ui/components.resources/ui.tooling.preview`；`jvmMain` 用 `libs.compose.desktop`（= `desktop-jvm-windows-x64`，含 skiko native）。插件提供的 `compose.*` 访问器自 CMP 1.10 起已废弃，不要再使用，也不要恢复旧的 `exclude(material-desktop)` 写法。
 - 测试覆盖很少：`core` 测试已被上游删除，目前仅 `composeApp:jvmTest` 一个冒烟测试。新增测试请写纯单元测试，不要依赖本机桌面 Excel 文件或 chromedriver（历史上这类测试在 CI/他机必然失败）。
 - 任务执行依赖本机 Chrome 与 chromedriver 路径（设置页 `Settings.kt` → `AppPreferences.chromeBinaryPath/chromeDriverPath`）；打包时驱动放在 `composeApp/bin/common/` 深层目录由程序查找。
 - 无 CI：合并前必须本地跑第 8 节的检查清单。
@@ -147,4 +153,4 @@ webDriver { chrome { driver(driverPath); binary(browserBinaryPath); silent() } }
 5. **工作完成即提交（硬性约束）**：按 Conventional Commits + 中文描述提交，工作区里不留已完成的未提交改动；push 与改动 `main` 仅在用户明确要求时进行。
 6. 若升级依赖或调整构建脚本：更新本文件第 2 节的版本表，并保持“0 告警”基线。
 
-_最后更新：2026-10-17（Gradle 9.8.1 / Kotlin 2.3.21 / Compose MP 1.9.3）_
+_最后更新：2026-10-17（Gradle 9.8.1 / Kotlin 2.4.21 / Compose MP 1.12.2）_
