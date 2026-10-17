@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.kotlinhero.autohelper.core.*
+import tech.kotlinhero.autohelper.logger
 import tech.kotlinhero.autohelper.core.business.diabetes.risk.DiabetesRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.form.HealthFormCompleteTask
 import tech.kotlinhero.autohelper.core.business.form.HealthFormCreateTask
@@ -18,6 +19,7 @@ import tech.kotlinhero.autohelper.core.business.task.DiabetesVisitImportTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionRiskStratificationTask
 import tech.kotlinhero.autohelper.core.business.task.HypertensionVisitImportTask
 import tech.kotlinhero.autohelper.core.config.AppPreferences
+import java.util.logging.Level
 
 class TaskExecuteViewModel : ViewModel() {
 
@@ -192,8 +194,9 @@ class TaskExecuteViewModel : ViewModel() {
                 log("任务已取消")
                 _taskState.value = TaskState.Cancelled
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.log(Level.SEVERE, "任务执行失败：${task.taskDescription}", e)
                 log(e.message?.takeIf { it.isNotBlank() } ?: "任务执行异常：${e.javaClass.simpleName}")
+                log("堆栈已写入 ~/AuthHelper.log")
                 _taskState.value = TaskState.Failed
             } finally {
                 currentJob = null

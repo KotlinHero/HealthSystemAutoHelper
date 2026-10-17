@@ -2,14 +2,11 @@ package tech.kotlinhero.autohelper
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import java.io.File
-import java.util.logging.FileHandler
-import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
+import java.util.logging.Level
 
-fun main()  {
+fun main() {
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-        logger.severe("Uncaught exception in thread ${thread.name}: ${throwable.message}")
+        logger.log(Level.SEVERE, "线程 ${thread.name} 未捕获异常", throwable)
         throwable.printStackTrace()
     }
 
@@ -21,13 +18,4 @@ fun main()  {
             App()
         }
     }
-}
-
-val logger: Logger by lazy {
-    val logFile = File(System.getProperty("user.home"), "AuthHelper.log").absolutePath
-    val logger = Logger.getLogger("YourAppLogger")
-    val fileHandler = FileHandler(logFile, true) // true 表示追加模式
-    fileHandler.formatter = SimpleFormatter()
-    logger.addHandler(fileHandler)
-    logger
 }
