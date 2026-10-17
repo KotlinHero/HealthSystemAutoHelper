@@ -21,7 +21,7 @@ import tech.kotlinhero.autohelper.core.config.AppPreferences
 
 class TaskExecuteViewModel : ViewModel() {
 
-    private val _taskState = MutableStateFlow(TaskState.Finished)
+    private val _taskState = MutableStateFlow(TaskState.Idle)
 
     private val _totalCount = MutableStateFlow(0)
 
@@ -168,28 +168,35 @@ class TaskExecuteViewModel : ViewModel() {
     private fun startIndexLogTask(
         task: ProgressTask,
     ) {
-        viewModelScope.launch {
-            _taskDescription.value = task.taskDescription
-            _taskState.value = TaskState.Running
-            _taskLog.update { emptyList() }
-            currentJob = launch {
-                try {
-                    task.execute().collect {
-                        when (it) {
-                            is TaskProgress.TotalCount -> _totalCount.value = it.value
-                            is TaskProgress.ProgressUpdate -> _finishCount.value = it.value
-                            is TaskProgress.Log -> log(it.value)
-                        }
+        // currentJob 只在任务真正结束后才置空，避免旧任务仍在收尾时被新任务并发启动
+        if (currentJob != null) {
+            log("已有任务正在运行，请等待完成或先取消")
+            return
+        }
+        _taskDescription.value = task.taskDescription
+        _taskState.value = TaskState.Running
+        _taskLog.value = emptyList()
+        _totalCount.value = 0
+        _finishCount.value = 0
+        currentJob = viewModelScope.launch {
+            try {
+                task.execute().collect {
+                    when (it) {
+                        is TaskProgress.TotalCount -> _totalCount.value = it.value
+                        is TaskProgress.ProgressUpdate -> _finishCount.value = it.value
+                        is TaskProgress.Log -> log(it.value)
                     }
-                } catch (_: CancellationException) {
-                    log("任务已取消")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    log(e.message ?: "")
-                    log("任务启动失败")
-                } finally {
-                    _taskState.value = TaskState.Finished
                 }
+                _taskState.value = TaskState.Finished
+            } catch (_: CancellationException) {
+                log("任务已取消")
+                _taskState.value = TaskState.Cancelled
+            } catch (e: Exception) {
+                e.printStackTrace()
+                log(e.message?.takeIf { it.isNotBlank() } ?: "任务执行异常：${e.javaClass.simpleName}")
+                _taskState.value = TaskState.Failed
+            } finally {
+                currentJob = null
             }
         }
     }

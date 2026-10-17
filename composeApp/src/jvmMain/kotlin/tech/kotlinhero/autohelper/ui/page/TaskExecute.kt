@@ -31,7 +31,7 @@ fun TaskExecute(
     val progress by animateFloatAsState(
         targetValue = totalCount.takeUnless { it == 0 }?.let {
             finishCount.toFloat() / it.toFloat()
-        } ?: 1f,
+        } ?: 0f,
         animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
     )
     Surface(
@@ -52,7 +52,7 @@ fun TaskExecute(
                             text = "$taskDescription${taskState.description}",
                             fontSize = 20.sp
                         )
-                        if (taskState == TaskState.Running) {
+                        if (taskState.isActive) {
                             Box(
                                 modifier = Modifier.fillMaxWidth()
                                     .padding(8.dp)
@@ -60,11 +60,12 @@ fun TaskExecute(
                                 Button(
                                     modifier = Modifier
                                         .align(Alignment.CenterEnd),
+                                    enabled = taskState == TaskState.Running,
                                     onClick = {
                                         taskExecuteViewModel.cancelCurrentTask()
                                     }
                                 ) {
-                                    Text("取消任务")
+                                    Text(if (taskState == TaskState.Cancelling) "取消中" else "取消任务")
                                 }
                             }
                         }
