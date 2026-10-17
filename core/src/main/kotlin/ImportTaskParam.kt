@@ -1,14 +1,15 @@
 package tech.kotlinhero.autohelper.core
 
-import org.openqa.selenium.WebDriver
-import tech.kotlinhero.autohelper.webdriver.webDriver
-
-interface ImportTaskParam {
+/**
+ * 带 Excel 文件的导入任务参数。
+ *
+ * 浏览器相关信息复用 [BrowserDriverConfig]（`browserBinaryPath` / `driverPath`），
+ * 创建 WebDriver 直接使用 `BrowserDriverConfig.buildWebDriver()`，不再重复实现一份。
+ */
+interface ImportTaskParam : BrowserDriverConfig {
     val username: String
     val password: String
     val excelPath: String
-    val browserBinaryPath: String
-    val driverPath: String
 }
 
 internal data class DefaultImportTaskParam(
@@ -33,12 +34,4 @@ fun importTaskParam(
         password,
         excelPath
     )
-}
-
-fun ImportTaskParam.buildWebDriver(): WebDriver = webDriver {
-    chrome {
-        driver(driverPath)
-        binary(browserBinaryPath)
-        silent()
-    }
 }
