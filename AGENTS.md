@@ -44,7 +44,8 @@
 ```
 composeApp/   # Compose 桌面 UI（仅 jvmMain 有代码，commonMain 为空，勿把桌面代码放 commonMain）
   src/jvmMain/kotlin/tech/kotlinhero/autohelper/
-    main.kt                      # Window 入口 + 全局 logger（写 ~/AuthHelper.log）
+    main.kt                      # Window 入口 + 未捕获异常处理
+    Logging.kt                   # 全局 logger（写 ~/AuthHelper.log，超过 1MB 轮转为 .1/.2）
     App.kt                       # NavigationRail + NavHost 外壳
     ui/page/                     # TaskMode / TaskExecute / TaskHistory / Settings
     ui/route/Router.kt           # NavigationRouter 路由枚举
