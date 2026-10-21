@@ -3,6 +3,8 @@
 面向 AI 编码 agent 与协作者的仓库工作指南。动代码前请先读完本文件；结构与命令发生变化时，请顺手更新本文件。
 
 > **硬性约束：每完成一项工作（功能、修复、重构、文档、构建配置等）就立即提交，不允许把已完成的改动留在工作区。** 提交规范见第 6 节，提交前检查清单见第 8 节；push 仍需用户明确要求。
+>
+> **硬性约束（分支）：开始任何一项工作时，先确认当前位于 `dev` 分支，不在则先签出（`git switch dev`）；随后建立新的工作分支 + 工作树，所有工作只在该工作分支上进行；工作完成后把工作分支合并回 `dev`，最后删除工作分支与工作树。** 分支命名与命令见第 6、8 节。
 
 ## 1. 项目是什么
 
@@ -131,7 +133,7 @@ webDriver { chrome { driver(driverPath); binary(browserBinaryPath); silent() } }
   - `chore(build): Gradle wrapper 升级至 9.8.1`
   - 一个提交只做一件事；先 `git status` 确认没有把构建产物、驱动文件、个人配置带进来。
 - **完成即提交（硬性约束）**：每完成一项工作（功能、修复、重构、文档、构建配置等）并跑完第 8 节检查清单后，**立即提交**，不允许把已完成的改动留在工作区等下一次指令；一项工作一个提交。
-- 分支：`dev` 为集成分支（当前工作分支），`main` 为发布分支；功能分支命名 `feature/xxx`。存在进行中的 `feature/selenium-to-playwright`（把 Selenium 迁移到 Playwright），改动 `webdriver/` 层前先确认是否要与其统一方向。
+- **分支与工作树（硬性约束）**：`dev` 是集成分支（所有工作分支的合并目标，也是唯一允许直接合并进来的分支），`main` 是发布分支；工作分支命名 `<type>/xxx`，`<type>` 与提交类型一致（功能 `feature/xxx`、修复 `fix/xxx`、杂务 `chore/xxx`、文档 `docs/xxx`）。流程：确认在 `dev` → 新建工作分支 + 工作树 → 只在工作分支上提交 → 合并回 `dev` → 删除工作分支与工作树（具体命令见第 8 节第 1、7 步）。工作树目录必须放在仓库**外部**的兄弟目录（如 `..\HealthSystemAutoHelper-wt-<name>`），放在仓库内部会被 `git status` 当成未跟踪文件。存在进行中的 `feature/selenium-to-playwright`（把 Selenium 迁移到 Playwright），改动 `webdriver/` 层前先确认是否要与其统一方向。
 - 不提交：`**/build/`、`.gradle`、`.idea`、`composeApp/bin/common/` 下的 chrome/chromedriver 运行时文件、个人 Excel 测试文件。
 
 ## 7. 已知陷阱
@@ -146,11 +148,31 @@ webDriver { chrome { driver(driverPath); binary(browserBinaryPath); silent() } }
 
 ## 8. Agent 工作流程（提交前检查清单）
 
-1. 阅读本文件与目标模块现有代码，遵循上述模块边界与命名。
-2. 改动后先跑编译自检（`--warning-mode all`），确认 **0 告警 0 错误**。
-3. 跑 `.\gradlew.bat :core:test :composeApp:jvmTest`（有新增测试则加对应模块 test 任务）。
-4. `git status` / `git diff` 自查：只提交源代码与必要文档，不带构建产物、驱动文件、个人配置。
-5. **工作完成即提交（硬性约束）**：按 Conventional Commits + 中文描述提交，工作区里不留已完成的未提交改动；push 与改动 `main` 仅在用户明确要求时进行。
-6. 若升级依赖或调整构建脚本：更新本文件第 2 节的版本表，并保持“0 告警”基线。
+1. **分支准备（硬性约束）**：先确认自己在 `dev` 分支，不在就先签出；然后建立工作分支 + 工作树，**后续所有读写、构建与提交都在工作树里完成**：
+
+   ```powershell
+   git rev-parse --abbrev-ref HEAD            # 不是 dev 时先执行：git switch dev
+   git worktree add ..\HealthSystemAutoHelper-wt-<name> -b <type>/<name> dev
+   cd ..\HealthSystemAutoHelper-wt-<name>
+   ```
+
+   `<type>/<name>` 与提交类型一致（`feature/` `fix/` `chore/` `docs/`），`<name>` 用简短英文短横线命名；工作树放在仓库外部，避免污染主仓的 `git status`。**禁止在 `dev` 上直接改代码。**
+2. 阅读本文件与目标模块现有代码，遵循上述模块边界与命名。
+3. 改动后先跑编译自检（`--warning-mode all`），确认 **0 告警 0 错误**。
+4. 跑 `.\gradlew.bat :core:test :composeApp:jvmTest`（有新增测试则加对应模块 test 任务）。
+5. `git status` / `git diff` 自查：只提交源代码与必要文档，不带构建产物、驱动文件、个人配置。
+6. **工作完成即提交（硬性约束）**：按 Conventional Commits + 中文描述提交，工作区里不留已完成的未提交改动；push 与改动 `main` 仅在用户明确要求时进行。
+7. **合并回 `dev` 并清理（硬性约束）**：检查清单全绿、工作树内 `git status` 干净后，回到主仓合并，然后删除工作树与工作分支：
+
+   ```powershell
+   git -C <主仓路径> switch dev
+   git -C <主仓路径> merge --no-ff <type>/<name>
+   git -C <主仓路径> worktree remove ..\HealthSystemAutoHelper-wt-<name>
+   git -C <主仓路径> branch -d <type>/<name>   # 工作树移除后才能删分支
+   git -C <主仓路径> worktree list             # 确认只剩主仓
+   ```
+
+   合并用 `--no-ff` 保留工作分支边界；合并完成后 `git branch` 里不应残留已合并的工作分支。
+8. 若升级依赖或调整构建脚本：更新本文件第 2 节的版本表，并保持“0 告警”基线。
 
 _最后更新：2026-10-17（Gradle 9.8.1 / Kotlin 2.4.21 / Compose MP 1.12.2）_
