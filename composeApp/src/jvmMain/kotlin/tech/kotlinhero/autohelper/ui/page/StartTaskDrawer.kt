@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -44,6 +45,7 @@ import tech.kotlinhero.autohelper.ui.task.TaskCredentials
 import tech.kotlinhero.autohelper.ui.task.TaskCredentialsStore
 import tech.kotlinhero.autohelper.ui.task.TaskDefinition
 import tech.kotlinhero.autohelper.ui.theme.AppColors
+import tech.kotlinhero.autohelper.ui.theme.AppShapes
 import tech.kotlinhero.autohelper.ui.theme.AppType
 import tech.kotlinhero.autohelper.ui.viewmodel.UserExcelTaskStartParams
 
@@ -63,8 +65,13 @@ fun StartTaskDrawer(
     var username by remember(definition) { mutableStateOf(initialParams?.username ?: saved.username) }
     var password by remember(definition) { mutableStateOf(initialParams?.password ?: saved.password) }
     var excelPath by remember(definition) { mutableStateOf(initialParams?.excelPath.orEmpty()) }
-    var excelName by remember(definition) { mutableStateOf(excelPath.substringAfterLast('\\', "")) }
+    // 补录时 Excel 路径来自上次运行记录，可能带 / 或 \，两种分隔符都取最后一段
+    var excelName by remember(definition) {
+        mutableStateOf(excelPath.substringAfterLast('\\').substringAfterLast('/'))
+    }
     var startFailed by remember(definition) { mutableStateOf(false) }
+    /** 补录模式：抽屉带着「只跑这几行」进来，启动时原样带给任务 */
+    val retryRows = remember(definition, initialParams) { initialParams?.onlyRows.orEmpty() }
     val picker = rememberFilePickerLauncher(type = FileKitType.File(setOf("xlsx", "xls"))) { file ->
         file?.let {
             excelPath = it.path
@@ -88,7 +95,11 @@ fun StartTaskDrawer(
                 Spacer(Modifier.width(11.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(definition.title, style = AppType.CardTitle, color = AppColors.Ink, maxLines = 1)
-                    Text("读取 Excel 后逐条录入系统", style = AppType.Meta, color = AppColors.Ink3)
+                    Text(
+                        if (retryRows.isEmpty()) "读取 Excel 后逐条录入系统" else "只补录上次未录入的记录",
+                        style = AppType.Meta,
+                        color = AppColors.Ink3,
+                    )
                 }
                 IconTap(Icons.Outlined.Close, "关闭", onDismiss, tint = AppColors.Ink3)
             }
@@ -99,6 +110,24 @@ fun StartTaskDrawer(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
             ) {
+                if (retryRows.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(AppShapes.Md)
+                            .background(AppColors.BrandTint)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                    ) {
+                        Text("只补录未录入的 ${retryRows.size} 条", style = AppType.MetaStrong, color = AppColors.BrandDeep)
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            "其余记录不会重跑；用的仍是上次那份 Excel，换文件也可以。",
+                            style = AppType.Small,
+                            color = AppColors.Ink2,
+                        )
+                    }
+                    Spacer(Modifier.height(18.dp))
+                }
                 Field("登录账号") {
                     AppTextField(
                         value = username,
@@ -145,9 +174,14 @@ fun StartTaskDrawer(
                 AppButton("取消", onDismiss, variant = BtnVariant.Ghost, size = BtnSize.Lg)
                 Spacer(Modifier.width(8.dp))
                 AppButton(
-                    text = "启动任务",
+                    text = if (retryRows.isEmpty()) "启动任务" else "补录这 ${retryRows.size} 条",
                     onClick = {
-                        val params = UserExcelTaskStartParams(username, password, excelPath)
+                        val params = UserExcelTaskStartParams(
+                            username = username,
+                            password = password,
+                            excelPath = excelPath,
+                            onlyRows = retryRows.ifEmpty { null },
+                        )
                         TaskCredentialsStore.save(definition.accountGroup, username, password)
                         val started = onStart(params)
                         startFailed = !started
@@ -156,7 +190,7 @@ fun StartTaskDrawer(
                     variant = BtnVariant.Primary,
                     size = BtnSize.Lg,
                     enabled = canStart,
-                    minWidth = 112.dp,
+                    minWidth = 132.dp,
                 )
             }
         }

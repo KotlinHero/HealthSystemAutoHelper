@@ -262,16 +262,35 @@ private fun OkBadge() {
     }
 }
 
-/** 失败面板：一行一条未录入记录，原因写清楚；条数多时在卡片内滚动 */
+/**
+ * 失败面板：一行一条未录入记录，原因写清楚；条数多时在卡片内滚动。
+ * 底部给「重试这 N 条」——补录只处理这几行，成功的记录不会重跑。
+ */
 @Composable
-fun FailedPanel(failures: List<TaskFailure>, handled: Int, modifier: Modifier = Modifier) {
+fun FailedPanel(
+    failures: List<TaskFailure>,
+    failCount: Int,
+    successCount: Int,
+    onRetry: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.WarningAmber, null, tint = AppColors.Err, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(6.dp))
-            Text("${failures.size} 条记录未录入", style = AppType.MetaStrong, color = AppColors.Err)
+            Text("$failCount 条记录未录入", style = AppType.MetaStrong, color = AppColors.Err)
         }
-        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+        if (failures.isEmpty()) {
+            Text(
+                "这一轮的明细没有随程序保留，补录时仍只会处理这 $failCount 行。",
+                style = AppType.Small,
+                color = AppColors.Ink3,
+            )
+        }
+        if (failures.isEmpty()) {
+            // 明细没留存时不给列表留空高，把底部按钮压到卡片底边
+            Spacer(Modifier.weight(1f))
+        } else LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
             itemsIndexed(failures) { index, failure ->
                 if (index > 0) HairLine()
                 Row(
@@ -304,15 +323,26 @@ fun FailedPanel(failures: List<TaskFailure>, handled: Int, modifier: Modifier = 
                 }
             }
         }
-        val successCount = (handled - failures.size).coerceAtLeast(0)
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             Text(
-                "把这几行单独存成一份 Excel 再启动，成功的 $successCount 条不会重跑",
+                if (onRetry != null) {
+                    "重试只处理这 $failCount 条，成功的 $successCount 条不会重跑"
+                } else {
+                    "把这几行单独存成一份 Excel 再启动，成功的 $successCount 条不会重跑"
+                },
                 style = AppType.Small,
                 color = AppColors.Ink3,
                 modifier = Modifier.weight(1f),
             )
-            AppLink(text = "复制明细", onClick = { copyFailuresToClipboard(failures) })
+            if (failures.isNotEmpty()) {
+                AppLink(text = "复制明细", onClick = { copyFailuresToClipboard(failures) })
+            }
+            if (onRetry != null) {
+                AppButton("重试这 $failCount 条", onRetry, variant = BtnVariant.Primary, size = BtnSize.Sm)
+            }
         }
     }
 }

@@ -12,6 +12,8 @@ import tech.kotlinhero.autohelper.core.ProgressTask
 import tech.kotlinhero.autohelper.core.TaskProgress
 import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.logger
+import tech.kotlinhero.autohelper.ui.task.TaskCatalog
+import tech.kotlinhero.autohelper.ui.task.TaskCredentialsStore
 import tech.kotlinhero.autohelper.ui.task.TaskDefinition
 import java.time.LocalTime
 import java.util.logging.Level
@@ -88,14 +90,50 @@ class TaskExecuteViewModel : ViewModel() {
         return true
     }
 
-    /** 用上次的任务与参数重跑（结果页的「再跑一次」） */
+    /** 用上次的任务与参数整体重跑（结果页的「再跑一次」），补录留下的行号不参与 */
     fun retryLast(): Boolean {
         val launch = _lastLaunch.value ?: return false
-        return startTask(launch.definition, launch.params)
+        return startTask(launch.definition, launch.params.copy(onlyRows = null))
+    }
+
+    /**
+     * 补录计划：这条任务现在还能只重跑哪些行。
+     * 返回 null 表示补录不了——没有未录入的记录，或找不到上次用的 Excel 与账号。
+     */
+    fun retryRowsFor(taskId: String): List<Int>? {
+        val record = _runHistory.value[taskId] ?: return null
+        if (record.failed <= 0) return null
+        // 本次会话的失败明细最准（含刚跑完这一轮）；程序重启后只能依赖上次运行记下的行号
+        val fresh = if (_activeTask.value?.id == taskId) _failures.value.mapNotNull { it.row } else emptyList()
+        val rows = fresh.ifEmpty { record.failedRows }
+        if (rows.isEmpty()) return null
+        if (resolvedParams(taskId) == null) return null
+        return rows.distinct().sorted()
+    }
+
+    /**
+     * 补录用的抽屉初始参数：沿用上次的账号与 Excel，行号限定为未录入的那几行。
+     * 走抽屉而不是直接开跑，用户可以顺手确认 Excel 还在原地——补录最容易踩的坑就是文件被挪走。
+     */
+    fun retryParamsFor(taskId: String): UserExcelTaskStartParams? {
+        val rows = retryRowsFor(taskId) ?: return null
+        val params = resolvedParams(taskId) ?: return null
+        return params.copy(onlyRows = rows)
+    }
+
+    /** 补录时用的参数：优先沿用上次启动的账号与文件，重启后回落到上次运行记下的 Excel 与已保存账号 */
+    private fun resolvedParams(taskId: String): UserExcelTaskStartParams? {
+        val record = _runHistory.value[taskId] ?: return null
+        val definition = TaskCatalog.byId(taskId) ?: return null
+        val last = _lastLaunch.value
+        if (last != null && last.definition.id == taskId) return last.params
+        if (record.excelPath.isBlank()) return null
+        val credentials = TaskCredentialsStore.load(definition.accountGroup)
+        return UserExcelTaskStartParams(credentials.username, credentials.password, record.excelPath)
     }
 
     private fun launchTask(definition: TaskDefinition, params: UserExcelTaskStartParams, task: ProgressTask) {
-        val interpreter = TaskLogInterpreter()
+        val interpreter = TaskLogInterpreter(rowMap = params.onlyRows)
         val startedAt = System.currentTimeMillis()
         _activeTask.value = definition
         _taskDescription.value = definition.title
@@ -138,21 +176,47 @@ class TaskExecuteViewModel : ViewModel() {
                 _taskState.value = state
                 _activeRow.value = null
                 _runStartedAt.value = null
-                recordHistory(definition, startedAt)
+                recordHistory(definition, params, startedAt)
                 currentJob = null
             }
         }
     }
 
-    private fun recordHistory(definition: TaskDefinition, startedAt: Long) {
-        val record = TaskRunRecord(
-            taskId = definition.id,
-            finishedAtMillis = System.currentTimeMillis(),
-            total = _totalCount.value,
-            handled = _finishCount.value,
-            failed = _failures.value.size,
-            durationMillis = (System.currentTimeMillis() - startedAt).coerceAtLeast(0L),
-        )
+    /**
+     * 记录本次结果。补录只跑了几行，不能把「131 条全部成功」写成「3 条成功」：
+     * 把本轮结果并回上一次记录，卡片与汇总条继续用整批的口径回答「上次跑到哪」。
+     */
+    private fun recordHistory(definition: TaskDefinition, params: UserExcelTaskStartParams, startedAt: Long) {
+        val now = System.currentTimeMillis()
+        val elapsed = (now - startedAt).coerceAtLeast(0L)
+        val failedRows = _failures.value.mapNotNull { it.row }.distinct().sorted()
+        val previous = _runHistory.value[definition.id]
+        val retried = params.onlyRows.orEmpty()
+        val record = if (retried.isEmpty() || previous == null) {
+            TaskRunRecord(
+                taskId = definition.id,
+                finishedAtMillis = now,
+                total = _totalCount.value,
+                handled = _finishCount.value,
+                failed = failedRows.size,
+                durationMillis = elapsed,
+                excelPath = params.excelPath,
+                failedRows = failedRows,
+            )
+        } else {
+            val succeeded = retried.toSet() - failedRows.toSet()
+            val remaining = (previous.failedRows.toSet() - succeeded) + failedRows.toSet()
+            TaskRunRecord(
+                taskId = definition.id,
+                finishedAtMillis = now,
+                total = previous.total,
+                handled = (previous.handled + succeeded.size).coerceAtMost(previous.total),
+                failed = remaining.size,
+                durationMillis = previous.durationMillis + elapsed,
+                excelPath = params.excelPath,
+                failedRows = remaining.sorted(),
+            )
+        }
         _runHistory.update { it + (definition.id to record) }
         runCatching { history.record(record) }
     }
@@ -168,4 +232,6 @@ data class UserExcelTaskStartParams(
     val username: String,
     val password: String,
     val excelPath: String,
+    /** 只处理这些数据行（从 1 开始，不含表头）；null 表示整份 Excel 全跑 */
+    val onlyRows: List<Int>? = null,
 )
