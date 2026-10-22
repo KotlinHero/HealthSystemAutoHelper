@@ -8,205 +8,164 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import tech.kotlinhero.autohelper.core.*
+import tech.kotlinhero.autohelper.core.ProgressTask
+import tech.kotlinhero.autohelper.core.TaskProgress
+import tech.kotlinhero.autohelper.core.TaskState
 import tech.kotlinhero.autohelper.logger
-import tech.kotlinhero.autohelper.core.business.diabetes.risk.DiabetesRiskStratificationTask
-import tech.kotlinhero.autohelper.core.business.form.HealthFormCompleteTask
-import tech.kotlinhero.autohelper.core.business.form.HealthFormCreateTask
-import tech.kotlinhero.autohelper.core.business.task.ContractImportTask
-import tech.kotlinhero.autohelper.core.business.task.ContractSaveTask
-import tech.kotlinhero.autohelper.core.business.task.DiabetesVisitImportTask
-import tech.kotlinhero.autohelper.core.business.task.HypertensionRiskStratificationTask
-import tech.kotlinhero.autohelper.core.business.task.HypertensionVisitImportTask
-import tech.kotlinhero.autohelper.core.config.AppPreferences
+import tech.kotlinhero.autohelper.ui.task.TaskDefinition
+import java.time.LocalTime
 import java.util.logging.Level
+
+/** 上一次启动过的任务与参数，用于「再跑一次」 */
+data class LastLaunch(
+    val definition: TaskDefinition,
+    val params: UserExcelTaskStartParams,
+)
 
 class TaskExecuteViewModel : ViewModel() {
 
+    private val history = TaskRunHistory()
+
     private val _taskState = MutableStateFlow(TaskState.Idle)
-
     private val _totalCount = MutableStateFlow(0)
-
     private val _finishCount = MutableStateFlow(0)
-
     private val _taskDescription = MutableStateFlow("")
-
-    private val _taskLog = MutableStateFlow(emptyList<String>())
+    private val _taskLog = MutableStateFlow(emptyList<TaskLogLine>())
+    private val _failures = MutableStateFlow(emptyList<TaskFailure>())
+    private val _activeTask = MutableStateFlow<TaskDefinition?>(null)
+    private val _activeRow = MutableStateFlow<Int?>(null)
+    private val _runStartedAt = MutableStateFlow<Long?>(null)
+    private val _runHistory = MutableStateFlow(history.all())
+    private val _lastLaunch = MutableStateFlow<LastLaunch?>(null)
 
     val taskState = _taskState.asStateFlow()
-
     val totalCount = _totalCount.asStateFlow()
-
     val finishCount = _finishCount.asStateFlow()
-
     val taskDescription = _taskDescription.asStateFlow()
+    val taskLog = _taskLog.asStateFlow()
+    val failures = _failures.asStateFlow()
+    val activeTask = _activeTask.asStateFlow()
+    val activeRow = _activeRow.asStateFlow()
+    val runStartedAt = _runStartedAt.asStateFlow()
+    val runHistory = _runHistory.asStateFlow()
+    val lastLaunch = _lastLaunch.asStateFlow()
 
     private var currentJob: Job? = null
 
-    val taskLog = _taskLog.asStateFlow()
-
-    private fun log(message: String) {
-        _taskLog.update { list -> list + message }
-    }
+    /** 任务运行中为 true：任务台上其余 7 张卡片据此置灰，避免并发启动 */
+    val isRunning: Boolean get() = currentJob != null
 
     fun cancelCurrentTask() {
         currentJob?.let {
             if (it.isActive) {
                 it.cancel()
                 _taskState.value = TaskState.Cancelling
-                log("任务取消中")
+                appendSystemLog("已取消，正在关闭浏览器…", LogLevel.Warn)
             }
         }
     }
 
-    fun startHypertensionVisitImportTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            HypertensionVisitImportTask(
-                importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
-                )
-            ),
-        )
-    }
-
-    fun startDiabetesVisitImportTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            DiabetesVisitImportTask(
-                importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
-                )
-            ),
-        )
-    }
-
-    fun startHypertensionRiskStratificationTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            HypertensionRiskStratificationTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
-            )
-        )
-    }
-
-    fun startDiabetesRiskStratificationTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            DiabetesRiskStratificationTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
-            )
-        )
-    }
-
-    fun startHealthFormCompleteTask(params: UserExcelTaskStartParams) {
-        startIndexLogTask(
-            HealthFormCompleteTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
-            )
-        )
-    }
-
-    fun startHealthFormCreateTask(params: UserExcelTaskStartParams) {
-        startIndexLogTask(
-            HealthFormCreateTask(
-                browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath),
-                healthSystemAuthentication(params.username, params.password),
-                params.excelPath
-            )
-        )
-    }
-
-    fun startContractImportTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            ContractImportTask(
-                importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
-                )
-            ),
-        )
-    }
-
-    fun startContractSaveTask(
-        params: UserExcelTaskStartParams,
-    ) {
-        startIndexLogTask(
-            ContractSaveTask(
-                importTaskParam(
-                    AppPreferences.chromeBinaryPath,
-                    AppPreferences.chromeDriverPath,
-                    params.username,
-                    params.password,
-                    params.excelPath
-                )
-            ),
-        )
-    }
-
-    private fun startIndexLogTask(
-        task: ProgressTask,
-    ) {
-        // currentJob 只在任务真正结束后才置空，避免旧任务仍在收尾时被新任务并发启动
+    /**
+     * 启动任务。返回 false 表示被拒绝（已有任务在跑，或任务构造失败），调用方据此决定是否关闭抽屉。
+     */
+    fun startTask(definition: TaskDefinition, params: UserExcelTaskStartParams): Boolean {
         if (currentJob != null) {
-            log("已有任务正在运行，请等待完成或先取消")
-            return
+            appendSystemLog("已有任务正在运行，请等它结束或先取消", LogLevel.Warn)
+            return false
         }
-        _taskDescription.value = task.taskDescription
+        val task: ProgressTask = try {
+            definition.create(params)
+        } catch (e: Exception) {
+            logger.log(Level.SEVERE, "任务创建失败：${definition.title}", e)
+            _activeTask.value = definition
+            _taskState.value = TaskState.Failed
+            _taskLog.value = listOf(
+                TaskLogLine(timeNow(), LogLevel.Err, null, null, e.message ?: "任务启动失败：${e.javaClass.simpleName}"),
+            )
+            return false
+        }
+        launchTask(definition, params, task)
+        return true
+    }
+
+    /** 用上次的任务与参数重跑（结果页的「再跑一次」） */
+    fun retryLast(): Boolean {
+        val launch = _lastLaunch.value ?: return false
+        return startTask(launch.definition, launch.params)
+    }
+
+    private fun launchTask(definition: TaskDefinition, params: UserExcelTaskStartParams, task: ProgressTask) {
+        val interpreter = TaskLogInterpreter()
+        val startedAt = System.currentTimeMillis()
+        _activeTask.value = definition
+        _taskDescription.value = definition.title
         _taskState.value = TaskState.Running
         _taskLog.value = emptyList()
+        _failures.value = emptyList()
+        _activeRow.value = null
         _totalCount.value = 0
         _finishCount.value = 0
+        _runStartedAt.value = startedAt
+        _lastLaunch.value = LastLaunch(definition, params)
         currentJob = viewModelScope.launch {
+            var state = TaskState.Finished
             try {
-                task.execute().collect {
-                    when (it) {
-                        is TaskProgress.TotalCount -> _totalCount.value = it.value
-                        is TaskProgress.ProgressUpdate -> _finishCount.value = it.value
-                        is TaskProgress.Log -> log(it.value)
+                task.execute().collect { progress ->
+                    when (progress) {
+                        is TaskProgress.TotalCount -> _totalCount.value = progress.value
+                        is TaskProgress.ProgressUpdate -> _finishCount.value = progress.value
+                        is TaskProgress.Log -> {
+                            val line = interpreter.interpret(progress.value, _finishCount.value, LocalTime.now())
+                            _taskLog.update { it + line }
+                            if (line.noise && line.row != null) {
+                                _activeRow.value = line.row
+                            }
+                            if (line.level == LogLevel.Err) {
+                                _failures.value = interpreter.failures.toList()
+                            }
+                        }
                     }
                 }
-                _taskState.value = TaskState.Finished
             } catch (_: CancellationException) {
-                log("任务已取消")
-                _taskState.value = TaskState.Cancelled
+                appendSystemLog("任务已取消", LogLevel.Warn)
+                state = TaskState.Cancelled
             } catch (e: Exception) {
-                logger.log(Level.SEVERE, "任务执行失败：${task.taskDescription}", e)
-                log(e.message?.takeIf { it.isNotBlank() } ?: "任务执行异常：${e.javaClass.simpleName}")
-                log("堆栈已写入 ~/AuthHelper.log")
-                _taskState.value = TaskState.Failed
+                logger.log(Level.SEVERE, "任务执行失败：${definition.title}", e)
+                appendSystemLog(e.message?.takeIf { it.isNotBlank() } ?: "任务执行异常：${e.javaClass.simpleName}", LogLevel.Err)
+                appendSystemLog("堆栈已写入 ~/AuthHelper.log", LogLevel.Neutral)
+                state = TaskState.Failed
             } finally {
+                _taskState.value = state
+                _activeRow.value = null
+                _runStartedAt.value = null
+                recordHistory(definition, startedAt)
                 currentJob = null
             }
         }
     }
+
+    private fun recordHistory(definition: TaskDefinition, startedAt: Long) {
+        val record = TaskRunRecord(
+            taskId = definition.id,
+            finishedAtMillis = System.currentTimeMillis(),
+            total = _totalCount.value,
+            handled = _finishCount.value,
+            failed = _failures.value.size,
+            durationMillis = (System.currentTimeMillis() - startedAt).coerceAtLeast(0L),
+        )
+        _runHistory.update { it + (definition.id to record) }
+        runCatching { history.record(record) }
+    }
+
+    private fun appendSystemLog(message: String, level: LogLevel) {
+        _taskLog.update { it + TaskLogLine(timeNow(), level, null, null, message) }
+    }
+
+    private fun timeNow(): String = LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"))
 }
 
 data class UserExcelTaskStartParams(
     val username: String,
     val password: String,
-    val excelPath: String
+    val excelPath: String,
 )

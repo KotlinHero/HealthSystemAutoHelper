@@ -1,0 +1,56 @@
+[
+  {
+    "file": "idle.png",
+    "state": "idle",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 93,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "drawer.png",
+    "state": "drawer",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 95,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "running.png",
+    "state": "running",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 88,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "done.png",
+    "state": "done",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 99,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "failed.png",
+    "state": "failed",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 87,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "settings.png",
+    "state": "settings",
+    "size": "1280x800",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": []
+  }
+]

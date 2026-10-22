@@ -21,7 +21,6 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.androidx.navigation)
 
             implementation(libs.filekit.dialogs.compose)
 
@@ -42,6 +41,38 @@ kotlin {
 val appPackageName: String = providers.gradleProperty("app.package.name").get()
 val appVersion: String = providers.gradleProperty("app.version").get()
 val appBind: Boolean = providers.gradleProperty("app.bind").get().toBoolean()
+
+// 设置页「关于」显示的版本号：构建时从 gradle.properties 的 app.version 生成，避免两处硬编码版本
+abstract class GenerateAppInfo : DefaultTask() {
+    @get:Input
+    abstract val version: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val dir = outputDir.get().asFile.resolve("tech/kotlinhero/autohelper")
+        dir.mkdirs()
+        dir.resolve("AppInfo.kt").writeText(
+            """
+            |package tech.kotlinhero.autohelper
+            |
+            |/** 构建时写入的应用版本，供设置页「关于」显示 */
+            |object AppInfo {
+            |    const val version: String = "${version.get()}"
+            |}
+            |""".trimMargin(),
+        )
+    }
+}
+
+val generateAppInfo = tasks.register<GenerateAppInfo>("generateAppInfo") {
+    version.set(providers.gradleProperty("app.version"))
+    outputDir.set(layout.buildDirectory.dir("generated/appInfo/jvmMain/kotlin"))
+}
+kotlin.sourceSets.named("jvmMain") { kotlin.srcDir(layout.buildDirectory.dir("generated/appInfo/jvmMain/kotlin")) }
+tasks.matching { it.name.startsWith("compile") }.configureEach { dependsOn(generateAppInfo) }
 
 compose.desktop {
     application {

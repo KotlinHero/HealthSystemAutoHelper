@@ -1,25 +1,15 @@
 package tech.kotlinhero.autohelper
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,159 +17,102 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import tech.kotlinhero.autohelper.core.TaskState
-import tech.kotlinhero.autohelper.ui.page.Settings
-import tech.kotlinhero.autohelper.ui.page.TaskExecute
-import tech.kotlinhero.autohelper.ui.page.TaskMode
-import tech.kotlinhero.autohelper.ui.route.NavigationRouter
-import tech.kotlinhero.autohelper.ui.route.RouterItem
-import tech.kotlinhero.autohelper.ui.route.TaskExecuteRouterItem
+import tech.kotlinhero.autohelper.ui.component.AppTopBar
+import tech.kotlinhero.autohelper.ui.component.LogOverlay
+import tech.kotlinhero.autohelper.ui.component.TopRoute
+import tech.kotlinhero.autohelper.ui.component.rememberHoverState
+import tech.kotlinhero.autohelper.ui.page.SettingsPage
+import tech.kotlinhero.autohelper.ui.page.StartTaskDrawer
+import tech.kotlinhero.autohelper.ui.page.TaskBoard
+import tech.kotlinhero.autohelper.ui.task.TaskDefinition
+import tech.kotlinhero.autohelper.ui.theme.AppColors
 import tech.kotlinhero.autohelper.ui.theme.DynamicConfigTheme
 import tech.kotlinhero.autohelper.ui.viewmodel.TaskExecuteViewModel
-
-@Composable
-fun App(
-    taskExecuteViewModel: TaskExecuteViewModel = viewModel { TaskExecuteViewModel() }
-) {
-    val navController = rememberNavController()
-    var currentPage: RouterItem by remember { mutableStateOf(NavigationRouter.TaskMode) }
-    val taskState by taskExecuteViewModel.taskState.collectAsState()
-    val totalCount by taskExecuteViewModel.totalCount.collectAsState()
-    val finishCount by taskExecuteViewModel.finishCount.collectAsState()
-
-    DynamicConfigTheme {
-        Row(modifier = Modifier.fillMaxSize()) {
-            NavigationRail(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                header = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-                    ) {
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.MedicalServices,
-                                contentDescription = null,
-                                modifier = Modifier.padding(8.dp),
-                            )
-                        }
-                        Text(
-                            text = "自动助手",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-            ) {
-                val navigationItems = NavigationRouter.entries + TaskExecuteRouterItem
-                navigationItems.forEach { item ->
-                    NavigationRailItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = currentPage == item,
-                        onClick = {
-                            currentPage = item
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                TaskProgressBadge(
-                    taskState = taskState,
-                    finishCount = finishCount,
-                    totalCount = totalCount,
-                    onClick = {
-                        currentPage = TaskExecuteRouterItem
-                        navController.navigate(TaskExecuteRouterItem.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                )
-            }
-            NavHost(
-                navController = navController,
-                startDestination = NavigationRouter.TaskMode.route,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            ) {
-                composable(NavigationRouter.TaskMode.route) {
-                    TaskMode(
-                        taskExecuteViewModel = taskExecuteViewModel,
-                        onTaskStarted = {
-                            currentPage = TaskExecuteRouterItem
-                            navController.navigate(TaskExecuteRouterItem.route) {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
-                }
-                composable(NavigationRouter.Settings.route) {
-                    Settings()
-                }
-                composable(TaskExecuteRouterItem.route) {
-                    TaskExecute(taskExecuteViewModel)
-                }
-            }
-        }
-    }
-}
+import tech.kotlinhero.autohelper.ui.viewmodel.UserExcelTaskStartParams
 
 /**
- * 导航栏底部常驻的进度徽标：任务运行中或已有进度时显示，点击进入任务执行页。
+ * 外壳：顶部两段导航（任务台 / 设置）+ 任务台 + 两个浮层（启动抽屉、完整日志）。
+ * 原来的左侧 NavigationRail 与「任务执行」独立页都被移除：任务进度改为在原位卡片里展开。
  */
 @Composable
-private fun TaskProgressBadge(
-    taskState: TaskState,
-    finishCount: Int,
-    totalCount: Int,
-    onClick: () -> Unit,
-) {
-    if (!taskState.isActive && totalCount == 0) {
-        return
-    }
-    val progress = if (totalCount == 0) 0f else finishCount.toFloat() / totalCount.toFloat()
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 6.dp, vertical = 12.dp)
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (taskState.isActive && totalCount == 0) {
-            // 任务刚启动、总数未知时用不确定进度
-            CircularProgressIndicator(
-                modifier = Modifier.size(28.dp),
-                strokeWidth = 3.dp,
-            )
-        } else {
-            CircularProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.size(28.dp),
-                strokeWidth = 3.dp,
-            )
+fun App(taskExecuteViewModel: TaskExecuteViewModel = viewModel { TaskExecuteViewModel() }) {
+    DynamicConfigTheme {
+        var route by remember { mutableStateOf(TopRoute.Board) }
+        var drawerTask by remember { mutableStateOf<TaskDefinition?>(null) }
+        var drawerParams by remember { mutableStateOf<UserExcelTaskStartParams?>(null) }
+        var logOpen by remember { mutableStateOf(false) }
+        var panelsCollapsed by remember { mutableStateOf(false) }
+
+        val taskState by taskExecuteViewModel.taskState.collectAsState()
+        val activeTask by taskExecuteViewModel.activeTask.collectAsState()
+        val finishCount by taskExecuteViewModel.finishCount.collectAsState()
+        val totalCount by taskExecuteViewModel.totalCount.collectAsState()
+        val log by taskExecuteViewModel.taskLog.collectAsState()
+
+        val running = taskState.isActive
+        LaunchedEffect(running) {
+            if (running) panelsCollapsed = false
         }
-        Text(
-            text = "$finishCount/$totalCount",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        val fraction = if (totalCount > 0) finishCount.toFloat() / totalCount else 0f
+        val scrimHover = rememberHoverState()
+
+        Box(Modifier.fillMaxSize().background(AppColors.Bg)) {
+            Column(Modifier.fillMaxSize()) {
+                AppTopBar(
+                    route = route,
+                    onRouteChange = { route = it },
+                    runningTitle = if (running) activeTask?.title else null,
+                    runningFraction = fraction,
+                    onRunPillClick = {
+                        route = TopRoute.Board
+                        panelsCollapsed = false
+                    },
+                )
+                when (route) {
+                    TopRoute.Board -> TaskBoard(
+                        viewModel = taskExecuteViewModel,
+                        panelsCollapsed = panelsCollapsed,
+                        onDismissPanels = { panelsCollapsed = true },
+                        onOpenDrawer = { definition, params ->
+                            drawerParams = params
+                            drawerTask = definition
+                        },
+                        onOpenLog = { logOpen = true },
+                    )
+                    TopRoute.Settings -> SettingsPage()
+                }
+            }
+
+            drawerTask?.let { definition ->
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Scrim)
+                        .clickable(
+                            interactionSource = scrimHover.interactionSource,
+                            indication = null,
+                            onClick = { drawerTask = null },
+                        ),
+                )
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.End) {
+                    StartTaskDrawer(
+                        definition = definition,
+                        initialParams = drawerParams,
+                        onDismiss = { drawerTask = null },
+                        onStart = { params -> taskExecuteViewModel.startTask(definition, params) },
+                        modifier = Modifier.fillMaxHeight(),
+                    )
+                }
+            }
+
+            if (logOpen) {
+                LogOverlay(
+                    title = activeTask?.title ?: "任务",
+                    lines = log,
+                    onDismiss = { logOpen = false },
+                )
+            }
+        }
     }
 }
