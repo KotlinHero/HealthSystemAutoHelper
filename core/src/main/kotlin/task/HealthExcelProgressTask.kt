@@ -19,7 +19,8 @@ class HealthExcelListProgressTask<T : HealthRecordDescription>(
     private val driver: WebDriver,
     private val importer: HealthRecordImporter<T>,
     private val excelRowMapper: ExcelRowMapper<T>,
-    private val excelFilePath: String
+    private val excelFilePath: String,
+    private val onlyRows: List<Int>? = null
 ) : IndependentTask<Flow<TaskProgress>> {
 
     override fun execute(): Flow<TaskProgress> = flowOnDefault {
@@ -27,7 +28,7 @@ class HealthExcelListProgressTask<T : HealthRecordDescription>(
             val records = coroutineScope {
                 launch { importer.prepareImport() }
                 readRecords()
-            }
+            }.selectRows(onlyRows)
             emitTotalCount(records.size)
             records.forEachIndexed { index, record ->
                 try {
