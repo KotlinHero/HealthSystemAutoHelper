@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,7 +29,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
@@ -383,17 +386,17 @@ fun FileDropField(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = if (fileName != null) Icons.Outlined.Info else Icons.Outlined.Info,
+                imageVector = if (fileName != null) Icons.Outlined.Description else Icons.Outlined.UploadFile,
                 contentDescription = null,
-                tint = AppColors.Ink2,
+                tint = if (fileName != null) AppColors.Ok else AppColors.Ink3,
                 modifier = Modifier.size(17.dp),
             )
         }
         Box(Modifier.width(10.dp))
-        Box(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = fileName ?: placeholder,
-                style = if (fileName != null) AppType.CardTitle.copy(fontSize = AppType.CardTitle.fontSize) else AppType.Body,
+                style = AppType.Body,
                 color = if (fileName != null) AppColors.Ink else AppColors.Ink2,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

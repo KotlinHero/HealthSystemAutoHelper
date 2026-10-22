@@ -25,7 +25,7 @@ class ContractImportTask(
             readExcel(params.excelPath) {
                 val sheet = getSheetAt(0)
                 val headRowCount = 1
-                val rows = sheet.drop(headRowCount).toList()
+                val rows = sheet.drop(headRowCount).toList().selectRows(params.onlyRows)
                 emitTotalCount(rows.size)
                 emitLog("正在登录系统准备导入")
                 prepareImport()

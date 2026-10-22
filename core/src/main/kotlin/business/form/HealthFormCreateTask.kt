@@ -23,7 +23,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class HealthFormCreateTask(
     private val browserDriverConfig: BrowserDriverConfig,
     private val healthSystemAuthentication: HealthSystemAuthentication,
-    private val excelFilePath: String
+    private val excelFilePath: String,
+    private val onlyRows: List<Int>? = null
 ) : ProgressTask {
 
     override val taskDescription: String = "新建体检表任务"
@@ -37,7 +38,8 @@ class HealthFormCreateTask(
                 authentication = healthSystemAuthentication
             ),
             excelRowMapper = HealthFormCreateRowMapper(),
-            excelFilePath = excelFilePath
+            excelFilePath = excelFilePath,
+            onlyRows = onlyRows
         ).execute().onCompletion {
             driver.quit()
         }

@@ -37,7 +37,10 @@ data class TaskFailure(
  * core 的 ProgressUpdate 在「处理完一行之后」发出，且失败也会 +1，
  * 所以收到失败日志时 finishCount 仍是上一行的值，行号取 max(已尝试次数, 已处理数 + 1)。
  */
-class TaskLogInterpreter {
+class TaskLogInterpreter(
+    /** 补录时进度号是「本次选中的第几条」，这里把它映射回原始 Excel 行号 */
+    private val rowMap: List<Int>? = null,
+) {
 
     private var attempts = 0
 
@@ -59,7 +62,7 @@ class TaskLogInterpreter {
                 TaskLogLine(
                     time = stamp,
                     level = LogLevel.Neutral,
-                    row = attempts,
+                    row = displayRow(attempts),
                     label = text.afterPrefix(START_PREFIX),
                     message = "开始导入",
                     noise = true,
@@ -68,14 +71,19 @@ class TaskLogInterpreter {
             text.startsWith(SUCCESS_PREFIX) -> TaskLogLine(
                 time = stamp,
                 level = LogLevel.Ok,
-                row = attempts.takeIf { it > 0 },
+                row = displayRow(attempts),
                 label = text.afterPrefix(SUCCESS_PREFIX),
                 message = "已保存",
             )
             text.startsWith(FAILURE_PREFIX_FULL) || text.startsWith(FAILURE_PREFIX_HALF) -> {
-                val body = text.afterPrefix(FAILURE_PREFIX_FULL).ifEmpty { text.afterPrefix(FAILURE_PREFIX_HALF) }
+                // 分组评估 / 健康体检任务用的是半角冒号；两种前缀各剥各的，剥错会把整句当记录
+                val body = if (text.startsWith(FAILURE_PREFIX_FULL)) {
+                    text.afterPrefix(FAILURE_PREFIX_FULL)
+                } else {
+                    text.afterPrefix(FAILURE_PREFIX_HALF)
+                }
                 val split = splitFailure(body)
-                val row = maxOf(attempts, handled + 1)
+                val row = displayRow(maxOf(attempts, handled + 1))
                 collected += TaskFailure(row = row, label = split.first, reason = split.second)
                 TaskLogLine(
                     time = stamp,
@@ -89,6 +97,11 @@ class TaskLogInterpreter {
             text.startsWith("任务取消") -> TaskLogLine(stamp, LogLevel.Warn, null, null, text)
             else -> TaskLogLine(stamp, LogLevel.Neutral, null, null, text)
         }
+    }
+
+    private fun displayRow(index: Int): Int? {
+        if (index <= 0) return null
+        return rowMap?.getOrNull(index - 1) ?: index
     }
 
     private fun String.afterPrefix(prefix: String): String = removePrefix(prefix).trim().trimStart('：', ':', ' ').trim()
@@ -110,8 +123,6 @@ class TaskLogInterpreter {
         const val FAILURE_PREFIX_FULL = "导入失败："
         const val FAILURE_PREFIX_HALF = "导入失败:"
         val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-        val EXCEPTION_PREFIX = Regex("^[A-Za-z][A-Za-z0-9_.]*(Exception|Error):\\s*")
-        const val REASON_LIMIT = 42
     }
 }
 

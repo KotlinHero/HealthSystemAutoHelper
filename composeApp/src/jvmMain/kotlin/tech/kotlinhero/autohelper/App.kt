@@ -73,6 +73,7 @@ fun App(taskExecuteViewModel: TaskExecuteViewModel = viewModel { TaskExecuteView
                     TopRoute.Board -> TaskBoard(
                         viewModel = taskExecuteViewModel,
                         panelsCollapsed = panelsCollapsed,
+                        onShowPanels = { panelsCollapsed = false },
                         onDismissPanels = { panelsCollapsed = true },
                         onOpenDrawer = { definition, params ->
                             drawerParams = params

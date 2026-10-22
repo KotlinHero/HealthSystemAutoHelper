@@ -85,12 +85,13 @@ class TaskGroup(
 
 object TaskCatalog {
 
-    private fun importParam(username: String, password: String, excelPath: String) = importTaskParam(
+    private fun importParam(p: UserExcelTaskStartParams) = importTaskParam(
         AppPreferences.chromeBinaryPath,
         AppPreferences.chromeDriverPath,
-        username,
-        password,
-        excelPath,
+        p.username,
+        p.password,
+        p.excelPath,
+        p.onlyRows,
     )
 
     private fun driverConfig() = browserDriverConfig(AppPreferences.chromeBinaryPath, AppPreferences.chromeDriverPath)
@@ -104,7 +105,7 @@ object TaskCatalog {
             domain = TaskDomain.Hypertension,
             icon = Icons.Outlined.MonitorHeart,
             accountGroup = AccountGroup.Hypertension,
-            create = { p -> HypertensionVisitImportTask(importParam(p.username, p.password, p.excelPath)) },
+            create = { p -> HypertensionVisitImportTask(importParam(p)) },
         ),
         TaskDefinition(
             id = "hyper-group",
@@ -118,6 +119,7 @@ object TaskCatalog {
                     driverConfig(),
                     healthSystemAuthentication(p.username, p.password),
                     p.excelPath,
+                    onlyRows = p.onlyRows,
                 )
             },
         ),
@@ -129,7 +131,7 @@ object TaskCatalog {
             domain = TaskDomain.Diabetes,
             icon = Icons.Outlined.WaterDrop,
             accountGroup = AccountGroup.Diabetes,
-            create = { p -> DiabetesVisitImportTask(importParam(p.username, p.password, p.excelPath)) },
+            create = { p -> DiabetesVisitImportTask(importParam(p)) },
         ),
         TaskDefinition(
             id = "diabetes-group",
@@ -143,6 +145,7 @@ object TaskCatalog {
                     driverConfig(),
                     healthSystemAuthentication(p.username, p.password),
                     p.excelPath,
+                    onlyRows = p.onlyRows,
                 )
             },
         ),
@@ -159,6 +162,7 @@ object TaskCatalog {
                     driverConfig(),
                     healthSystemAuthentication(p.username, p.password),
                     p.excelPath,
+                    onlyRows = p.onlyRows,
                 )
             },
         ),
@@ -174,6 +178,7 @@ object TaskCatalog {
                     driverConfig(),
                     healthSystemAuthentication(p.username, p.password),
                     p.excelPath,
+                    onlyRows = p.onlyRows,
                 )
             },
         ),
@@ -185,7 +190,7 @@ object TaskCatalog {
             domain = TaskDomain.Contract,
             icon = Icons.Outlined.Handshake,
             accountGroup = AccountGroup.Contract,
-            create = { p -> ContractImportTask(importParam(p.username, p.password, p.excelPath)) },
+            create = { p -> ContractImportTask(importParam(p)) },
         ),
         TaskDefinition(
             id = "archive-save",
@@ -194,7 +199,7 @@ object TaskCatalog {
             domain = TaskDomain.Contract,
             icon = Icons.Outlined.Save,
             accountGroup = AccountGroup.Contract,
-            create = { p -> ContractSaveTask(importParam(p.username, p.password, p.excelPath)) },
+            create = { p -> ContractSaveTask(importParam(p)) },
         ),
     )
 

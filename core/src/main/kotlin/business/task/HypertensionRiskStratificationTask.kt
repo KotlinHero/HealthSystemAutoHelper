@@ -20,6 +20,7 @@ class HypertensionRiskStratificationTask(
     private val browserDriverConfig: BrowserDriverConfig,
     private val healthSystemAuthentication: HealthSystemAuthentication,
     private val excelFilePath: String,
+    private val onlyRows: List<Int>? = null,
 ) : ProgressTask {
 
     companion object {
@@ -33,7 +34,7 @@ class HypertensionRiskStratificationTask(
             val records = coroutineScope {
                 launch { prepareImport() }
                 readRecords()
-            }
+            }.selectRows(onlyRows)
             emitTotalCount(records.size)
             records.forEachIndexed { index, record ->
                 try {

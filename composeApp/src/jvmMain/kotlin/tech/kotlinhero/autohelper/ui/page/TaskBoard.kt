@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Schedule
@@ -71,6 +72,7 @@ import tech.kotlinhero.autohelper.ui.viewmodel.UserExcelTaskStartParams
 fun TaskBoard(
     viewModel: TaskExecuteViewModel,
     panelsCollapsed: Boolean,
+    onShowPanels: () -> Unit,
     onDismissPanels: () -> Unit,
     onOpenDrawer: (TaskDefinition, UserExcelTaskStartParams?) -> Unit,
     onOpenLog: () -> Unit,
@@ -111,6 +113,21 @@ fun TaskBoard(
     }
     val lastRecord = remember(history) { history.values.maxByOrNull { it.finishedAtMillis } }
 
+    /** 某个任务现在能不能只补录未录入的行：能则给出 Excel 行号，不能给 null */
+    val retryRowsOf: (String) -> List<Int>? = viewModel::retryRowsFor
+    /** 本轮失败条数：跑完取失败明细，重启后用历史记录里的条数 */
+    val failedCount = if (failures.isNotEmpty()) failures.size else activeTask?.let { history[it.id]?.failed } ?: 0
+    val successCount = (finishCount - failedCount).coerceAtLeast(0)
+    /** 补录入口：把「只跑这几行」作为抽屉初始参数，用户在抽屉里确认 Excel 后再启动 */
+    val retryOpen: (TaskDefinition) -> Unit = { definition ->
+        viewModel.retryParamsFor(definition.id)?.let { params -> onOpenDrawer(definition, params) }
+    }
+    val retryDefinition = activeTask?.takeIf { retryRowsOf(it.id) != null }
+    val retryAction: (() -> Unit)? = retryDefinition?.let { definition ->
+        val action: () -> Unit = { retryOpen(definition) }
+        action
+    }
+
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp)) {
         Text("任务台", style = AppType.PageTitle, color = AppColors.Ink)
         Spacer(Modifier.height(4.dp))
@@ -143,18 +160,25 @@ fun TaskBoard(
             )
             failedRun -> FailedStrip(
                 title = activeTask?.title ?: "任务",
-                failed = failures.size,
-                success = (finishCount - failures.size).coerceAtLeast(0),
+                failed = failedCount,
+                success = successCount,
                 momentMillis = System.currentTimeMillis(),
+                cancelledOnly = failedCount == 0,
                 onBack = onDismissPanels,
-                onShow = { panelsCollapsed.not() },
+                onShow = onShowPanels,
+                onRetry = retryAction,
             )
             else -> IdleStrip(
                 record = lastRecord,
+                retryRows = lastRecord?.let { retryRowsOf(it.taskId) },
                 onPeek = { id -> peekId = if (peekId == id) null else id },
                 onRunAgain = { definition ->
-                    onOpenDrawer(definition, lastLaunch?.takeIf { it.definition.id == definition.id }?.params)
+                    onOpenDrawer(
+                        definition,
+                        lastLaunch?.takeIf { it.definition.id == definition.id }?.params?.copy(onlyRows = null),
+                    )
                 },
+                onRetry = { id -> TaskCatalog.byId(id)?.let(retryOpen) },
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -176,6 +200,8 @@ fun TaskBoard(
                         failures = failures,
                         durationMillis = elapsed,
                         history = history,
+                        retryRowsOf = retryRowsOf,
+                        onRetryTask = retryOpen,
                         onCardClick = { definition ->
                             peekId = null
                             onOpenDrawer(definition, lastLaunch?.takeIf { it.definition.id == definition.id }?.params)
@@ -200,6 +226,8 @@ fun TaskBoard(
                         failures = failures,
                         durationMillis = elapsed,
                         history = history,
+                        retryRowsOf = retryRowsOf,
+                        onRetryTask = retryOpen,
                         onCardClick = { definition ->
                             peekId = null
                             onOpenDrawer(definition, lastLaunch?.takeIf { it.definition.id == definition.id }?.params)
@@ -229,6 +257,8 @@ private fun GroupBlock(
     history: Map<String, TaskRunRecord>,
     onCardClick: (TaskDefinition) -> Unit,
     onOpenLog: () -> Unit,
+    retryRowsOf: (String) -> List<Int>?,
+    onRetryTask: (TaskDefinition) -> Unit,
 ) {
     Column {
         Row(Modifier.height(24.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -252,6 +282,8 @@ private fun GroupBlock(
                         failures = failures,
                         durationMillis = if (definition.id == activeTask?.id) durationMillis else record?.durationMillis ?: 0L,
                         record = record,
+                        retryRows = retryRowsOf(definition.id),
+                        onRetry = { onRetryTask(definition) },
                         onOpenLog = onOpenLog,
                     )
                 } else {
@@ -279,6 +311,8 @@ private fun ExpandedCard(
     failures: List<tech.kotlinhero.autohelper.ui.viewmodel.TaskFailure>,
     durationMillis: Long,
     record: TaskRunRecord?,
+    retryRows: List<Int>?,
+    onRetry: () -> Unit,
     onOpenLog: () -> Unit,
 ) {
     val running = taskState.isActive
@@ -287,6 +321,8 @@ private fun ExpandedCard(
     val showFail = failedRun || peekFailed
     val height = when {
         running -> 214.dp
+        // 明细没留存时内容只有两行字 + 底部按钮，不需要和带明细时一样高
+        showFail && failures.isEmpty() -> 152.dp
         showFail -> 320.dp
         else -> 186.dp
     }
@@ -313,16 +349,37 @@ private fun ExpandedCard(
             }
             showFail -> {
                 val shown = failures
+                val failCount = if (shown.isNotEmpty()) shown.size else record?.failed ?: 0
+                val successCount = if (shown.isNotEmpty()) {
+                    (finishCount - shown.size).coerceAtLeast(0)
+                } else {
+                    record?.handled ?: finishCount
+                }
                 RunHead(
                     definition = definition,
-                    pillText = "${shown.size} 条未录入",
-                    pillKind = PillKind.Err,
+                    pillText = if (failCount == 0) "已取消" else "未录入",
+                    pillKind = if (failCount == 0) PillKind.Warn else PillKind.Err,
+                    action = {
+                        if (failCount == 0) {
+                            AppButton("查看完整日志", onOpenLog, variant = BtnVariant.Quiet, size = BtnSize.Sm)
+                        }
+                    },
                 )
-                FailedPanel(
-                    failures = shown,
-                    handled = record?.handled ?: finishCount,
-                    modifier = Modifier.weight(1f),
-                )
+                if (failCount == 0) {
+                    Text(
+                        "本轮已停止，已录入 $successCount 条，没有留下未录入记录。",
+                        style = AppType.CardDesc,
+                        color = AppColors.Ink3,
+                    )
+                } else {
+                    FailedPanel(
+                        failures = shown,
+                        failCount = failCount,
+                        successCount = successCount,
+                        onRetry = if (retryRows != null) onRetry else null,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
             else -> {
                 RunHead(
@@ -401,8 +458,10 @@ private fun Strip(
 @Composable
 private fun IdleStrip(
     record: TaskRunRecord?,
+    retryRows: List<Int>?,
     onPeek: (String) -> Unit,
     onRunAgain: (TaskDefinition) -> Unit,
+    onRetry: (String) -> Unit,
 ) {
     if (record == null) {
         Strip(
@@ -415,6 +474,7 @@ private fun IdleStrip(
     }
     val definition = TaskCatalog.byId(record.taskId)
     val failed = record.failed
+    val canRetry = !record.allSucceeded && retryRows != null
     Strip(
         tone = if (record.allSucceeded) Tone.Brand else Tone.Err,
         icon = if (record.allSucceeded) Icons.Outlined.CheckCircle else Icons.Outlined.WarningAmber,
@@ -424,12 +484,20 @@ private fun IdleStrip(
             append(" · ${record.total} 条 · ")
             append(if (record.allSucceeded) "全部成功" else "$failed 条未录入")
             append(" · 用时 ${formatDuration(record.durationMillis)}")
+            if (canRetry) append(" · 补录只跑这几行")
         },
         actions = {
             AppButton("查看结果", { onPeek(record.taskId) }, variant = BtnVariant.Ghost, size = BtnSize.Sm)
-            if (definition != null) {
+            if (canRetry) {
                 AppButton(
-                    text = if (record.allSucceeded) "再跑一次" else "补齐未录入的 $failed 条",
+                    text = "补齐未录入的 $failed 条",
+                    onClick = { onRetry(record.taskId) },
+                    variant = BtnVariant.Primary,
+                    size = BtnSize.Sm,
+                )
+            } else if (definition != null) {
+                AppButton(
+                    text = "再跑一次",
                     onClick = { onRunAgain(definition) },
                     variant = BtnVariant.Primary,
                     size = BtnSize.Sm,
@@ -497,17 +565,31 @@ private fun FailedStrip(
     failed: Int,
     success: Int,
     momentMillis: Long,
+    cancelledOnly: Boolean,
     onBack: () -> Unit,
     onShow: () -> Unit,
+    onRetry: (() -> Unit)?,
 ) {
     Strip(
-        tone = Tone.Err,
-        icon = Icons.Outlined.WarningAmber,
-        title = "$title 有 $failed 条未录入",
-        meta = "${formatRunMoment(momentMillis)} · $success 条成功 · 把未录入的几行单独存成 Excel 再启动即可",
+        tone = if (cancelledOnly) Tone.Idle else Tone.Err,
+        icon = if (cancelledOnly) Icons.Outlined.Cancel else Icons.Outlined.WarningAmber,
+        title = if (cancelledOnly) "$title 已取消" else "$title 有 $failed 条未录入",
+        meta = if (cancelledOnly) {
+            "${formatRunMoment(momentMillis)} · 已录入 $success 条 · 本轮已停止"
+        } else if (onRetry != null) {
+            "${formatRunMoment(momentMillis)} · $success 条成功 · 补录只处理未录入的 $failed 条，其余不会重跑"
+        } else {
+            "${formatRunMoment(momentMillis)} · $success 条成功 · 把未录入的几行单独存成 Excel 再启动即可"
+        },
         actions = {
             AppButton("返回任务台", onBack, variant = BtnVariant.Ghost, size = BtnSize.Sm)
-            AppButton("查看未录入记录", onShow, variant = BtnVariant.Primary, size = BtnSize.Sm)
+            if (!cancelledOnly) {
+                if (onRetry != null) {
+                    AppButton("重试这 $failed 条", onRetry, variant = BtnVariant.Primary, size = BtnSize.Sm)
+                } else {
+                    AppButton("查看未录入记录", onShow, variant = BtnVariant.Primary, size = BtnSize.Sm)
+                }
+            }
         },
     )
 }
