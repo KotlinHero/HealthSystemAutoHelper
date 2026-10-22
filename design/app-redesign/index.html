@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>卫生信息系统自动助手 · 任务台</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body x-data="app()" :class="drawerOpen ? 'has-drawer' : ''">
+
+<!-- ===== 图标（内联 sprite，单套线性图标，1.75 描边） ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-activity" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 12.4h4.1l2.1-5.6 3.2 11 2.2-6.4h6.8"/></g>
+    <g id="i-droplet" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4c3.3 3.9 5.7 6.7 5.7 9.5a5.7 5.7 0 0 1-11.4 0c0-2.8 2.4-5.6 5.7-9.5Z"/></g>
+    <g id="i-layers" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.6 3.6 8l8.4 4.4L20.4 8 12 3.6Z"/><path d="m3.6 12.5 8.4 4.4 8.4-4.4"/><path d="m3.6 16.8 8.4 4.4 8.4-4.4"/></g>
+    <g id="i-clipboard-plus" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.4H6.6a1.8 1.8 0 0 0-1.8 1.8v13a1.8 1.8 0 0 0 1.8 1.8h10.8a1.8 1.8 0 0 0 1.8-1.8v-13a1.8 1.8 0 0 0-1.8-1.8H15"/><path d="M9 3.2h6v3.4H9z"/><path d="M12 11v5M9.5 13.5h5"/></g>
+    <g id="i-clipboard-check" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.4H6.6a1.8 1.8 0 0 0-1.8 1.8v13a1.8 1.8 0 0 0 1.8 1.8h10.8a1.8 1.8 0 0 0 1.8-1.8v-13a1.8 1.8 0 0 0-1.8-1.8H15"/><path d="M9 3.2h6v3.4H9z"/><path d="m9.2 13.4 2.3 2.3 4.3-4.6"/></g>
+    <g id="i-pen" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 19.4l4.5-1.1 9.4-9.4a2.1 2.1 0 0 0-3-3L6.1 15.3l-1.5 4.1Z"/><path d="m13.6 7.4 3 3"/></g>
+    <g id="i-archive" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 5.2h16.4v3.8H3.8z"/><path d="M5.2 9v9.6a1.6 1.6 0 0 0 1.6 1.6h10.4a1.6 1.6 0 0 0 1.6-1.6V9"/><path d="M10 12.6h4"/></g>
+    <g id="i-gear" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M19.3 14.6a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.84 2.84l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.5a1.7 1.7 0 0 0-1.1-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.84-2.84l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.5A1.7 1.7 0 0 0 5.06 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.84-2.84l.06.06a1.7 1.7 0 0 0 1.87.34H9.5a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.5a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.84 2.84l-.06.06a1.7 1.7 0 0 0-.34 1.87v.07a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.5a1.7 1.7 0 0 0-1.2.87Z"/></g>
+    <g id="i-grid" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="3.6" width="7" height="7" rx="2"/><rect x="13.4" y="3.6" width="7" height="7" rx="2"/><rect x="3.6" y="13.4" width="7" height="7" rx="2"/><rect x="13.4" y="13.4" width="7" height="7" rx="2"/></g>
+    <g id="i-clock" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.1 1.9"/></g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></g>
+    <g id="i-alert" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2 21 19.6H3L12 4.2Z"/><path d="M12 10.2v4.2"/><path d="M12 17.3h.01"/></g>
+    <g id="i-x" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 6.4l11.2 11.2M17.6 6.4 6.4 17.6"/></g>
+    <g id="i-chevron" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9.6 6.4 5.6 5.6-5.6 5.6"/></g>
+    <g id="i-play" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 5.8 18 12l-9.4 6.2V5.8Z"/></g>
+    <g id="i-refresh" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.7-6"/><path d="M20.2 4.4v5h-5"/></g>
+    <g id="i-file" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 3.6h6.6l5 5v11.2a1.6 1.6 0 0 1-1.6 1.6H6.2a1.6 1.6 0 0 1-1.6-1.6V5.2a1.6 1.6 0 0 1 1.6-1.6Z"/><path d="M12.6 3.8v5.2h5.2"/></g>
+    <g id="i-folder" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 7.6a1.8 1.8 0 0 1 1.8-1.8h3.7l2 2.4h7.5a1.8 1.8 0 0 1 1.8 1.8v8.4a1.8 1.8 0 0 1-1.8 1.8H5.4a1.8 1.8 0 0 1-1.8-1.8V7.6Z"/></g>
+    <g id="i-eye" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 12S6.2 5.8 12 5.8 21.4 12 21.4 12 17.8 18.2 12 18.2 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.9"/></g>
+    <g id="i-eye-off" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16"/><path d="M9.9 5.9A9.6 9.6 0 0 1 12 5.8c5.8 0 9.4 6.2 9.4 6.2a18 18 0 0 1-3 3.7"/><path d="M6.4 7.9A18.3 18.3 0 0 0 2.6 12S6.2 18.2 12 18.2a9.7 9.7 0 0 0 3.1-.5"/><path d="M10.2 10.4a2.9 2.9 0 0 0 4 4"/></g>
+    <g id="i-user" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20.2a7.4 7.4 0 0 1 14.4 0"/></g>
+    <g id="i-cancel" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6"/></g>
+    <g id="i-list" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 6.6h11.2M8.6 12h11.2M8.6 17.4h11.2"/><path d="M4.4 6.6h.01M4.4 12h.01M4.4 17.4h.01"/></g>
+    <g id="i-link-out" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 5.4h5.2v5.2"/><path d="M18.6 5.4 10.8 13.2"/><path d="M18 14v4.4a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 18.4V7.6A1.6 1.6 0 0 1 5.6 6H10"/></g>
+    <g id="i-download" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4v10.2"/><path d="m7.8 10.6 4.2 4.2 4.2-4.2"/><path d="M4.8 19.6h14.4"/></g>
+    <g id="i-cross" fill="currentColor"><path d="M12 4.4a1.5 1.5 0 0 1 1.5 1.5v4.6h4.6a1.5 1.5 0 0 1 0 3h-4.6v4.6a1.5 1.5 0 0 1-3 0v-4.6H5.9a1.5 1.5 0 0 1 0-3h4.6V5.9A1.5 1.5 0 0 1 12 4.4Z"/></g>
+  </defs>
+</svg>
+
+<div class="app">
+  <!-- ===== 顶栏 ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark"><svg viewBox="0 0 24 24"><use href="#i-cross"/></svg></span>
+      <span class="brand__name">卫生信息系统自动助手</span>
+      <span class="brand__divider"></span>
+      <span class="brand__sub">Excel 批量录入</span>
+    </div>
+    <div class="topbar__spacer"></div>
+
+    <button class="runpill" x-show="scene==='running'" @click="scene='idle'" title="回到任务卡">
+      <span class="pulse"></span>
+      <span><b x-text="activeTask.title"></b></span>
+      <span class="minibar"><i style="width:97.7%"></i></span>
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;opacity:.5"><use href="#i-chevron"/></svg>
+    </button>
+
+    <nav class="navseg" aria-label="主导航">
+      <button class="navseg__item" :class="{'is-active': view==='board'}" @click="goBoard()">
+        <svg viewBox="0 0 24 24"><use href="#i-grid"/></svg>任务台
+      </button>
+      <button class="navseg__item" :class="{'is-active': view==='settings'}" @click="goSettings()">
+        <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>设置
+      </button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <!-- ============ 任务台 ============ -->
+    <div class="wrap" x-show="view==='board'">
+      <div class="pagehead anim-in">
+        <h1>任务台</h1>
+        <p x-text="scene==='running' ? '本轮进行中 · 其他 7 个任务在本轮结束后可启动' : '8 个任务 · 4 组系统账号 · 同一时间只跑一个'"></p>
+      </div>
+
+      <!-- 汇总条：随状态换内容，占同一槽位 -->
+      <section class="strip anim-in" :class="{'is-running': scene==='running' || scene==='done' || scene==='failed'}">
+        <!-- 空闲 -->
+        <template x-if="scene==='idle' || scene==='drawer'">
+          <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
+            <span class="strip__icon"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg></span>
+            <div class="strip__body">
+              <div class="strip__title"><span class="dot" style="background:var(--err)"></span>上次运行：导入高血压随访</div>
+              <div class="strip__meta">3 月 12 日 16:42<span class="sep">·</span><b>128</b> 条成功<span class="sep">·</span><b style="color:var(--err)">3</b> 条未录入，可重试</div>
+            </div>
+            <div class="strip__actions">
+              <button class="btn btn--ghost btn--sm" @click="scene='failed'">查看失败记录</button>
+              <button class="btn btn--primary btn--sm" @click="openDrawer('hyper-visit')">补齐这 3 条</button>
+            </div>
+          </div>
+        </template>
+        <!-- 运行中 -->
+        <template x-if="scene==='running'">
+          <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
+            <span class="strip__icon"><svg viewBox="0 0 24 24"><use href="#i-activity"/></svg></span>
+            <div class="strip__body">
+              <div class="strip__title">正在运行：<span x-text="activeTask.title"></span></div>
+              <div class="strip__meta">第 <b>129</b> 行 · 王秀兰<span class="sep">·</span>已用 12:38<span class="sep">·</span>预计还需 2 分钟</div>
+            </div>
+            <div class="strip__progress">
+              <div class="strip__meta" style="display:flex;justify-content:space-between"><span>进度</span><b>97.7%</b></div>
+              <div class="bar"><i style="width:97.7%"></i></div>
+            </div>
+            <div class="strip__actions">
+              <button class="btn btn--danger-ghost btn--sm" @click="scene='idle'">取消任务</button>
+            </div>
+          </div>
+        </template>
+        <!-- 完成 -->
+        <template x-if="scene==='done'">
+          <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
+            <span class="strip__icon" style="background:var(--ok-tint);color:var(--ok)"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>
+            <div class="strip__body">
+              <div class="strip__title"><span x-text="activeTask.title"></span><span class="pill pill--ok">已完成</span></div>
+              <div class="strip__meta">今天 16:56<span class="sep">·</span><b>131</b> 条全部成功<span class="sep">·</span>耗时 14:02</div>
+            </div>
+            <div class="strip__actions">
+              <button class="btn btn--ghost btn--sm" @click="scene='idle'">返回任务台</button>
+              <button class="btn btn--soft btn--sm" @click="scene='running'">再跑一次</button>
+            </div>
+          </div>
+        </template>
+        <!-- 失败 -->
+        <template x-if="scene==='failed'">
+          <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
+            <span class="strip__icon" style="background:var(--err-tint);color:var(--err)"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></span>
+            <div class="strip__body">
+              <div class="strip__title"><span x-text="activeTask.title"></span><span class="pill pill--err">3 条未录入</span></div>
+              <div class="strip__meta">今天 16:56<span class="sep">·</span><b>128</b> 条成功<span class="sep">·</span>可只补录这 3 条，不必重跑全部</div>
+            </div>
+            <div class="strip__actions">
+              <button class="btn btn--ghost btn--sm" @click="scene='idle'">返回任务台</button>
+              <button class="btn btn--primary btn--sm" @click="scene='running'">重试这 3 条</button>
+            </div>
+          </div>
+        </template>
+      </section>
+
+      <!-- 任务板：四象限 -->
+      <div class="board">
+        <template x-for="(g, gi) in groups" :key="g.key">
+          <section class="group" :style="'--dc:'+g.color+';--dct:'+g.tint" :class="'anim-in'+(gi?'-'+Math.min(gi+1,4):'')">
+            <div class="group__head">
+              <span class="group__bar"></span>
+              <span class="group__name" x-text="g.name"></span>
+            </div>
+            <div class="group__cards">
+              <template x-for="t in g.tasks" :key="t.key">
+                <div>
+                  <!-- 常态卡片 -->
+                  <button class="task" x-show="t.key !== expandKey" :class="{'is-dim': !!expandKey}"
+                          @click="openDrawer(t.key)" :disabled="!!expandKey">
+                    <span class="task__icon"><svg viewBox="0 0 24 24"><use :href="'#'+t.icon"/></svg></span>
+                    <span class="task__body">
+                      <span class="task__title" x-text="t.title"></span>
+                      <span class="task__desc" x-text="t.desc"></span>
+                      <span class="task__meta">
+                        <span class="dot" :style="'background:'+(t.fail?'var(--err)':'var(--ok)')"></span>
+                        <span x-text="t.meta"></span>
+                        <span class="status" :class="t.fail?'is-fail':'is-ok'" x-text="t.statusText"></span>
+                      </span>
+                    </span>
+                    <span class="task__go"><svg viewBox="0 0 24 24"><use href="#i-chevron"/></svg></span>
+                  </button>
+
+                  <!-- 原位展开：运行 / 完成 / 失败 -->
+                  <div class="task is-expanded" x-show="t.key === expandKey">
+                    <div class="runhead">
+                      <span class="task__icon"><svg viewBox="0 0 24 24"><use :href="'#'+t.icon"/></svg></span>
+                      <div class="runhead__text">
+                        <div class="runhead__title" style="display:flex;align-items:center;gap:8px">
+                          <span x-text="t.title"></span>
+                          <span class="pill pill--run" x-show="scene==='running'">运行中</span>
+                          <span class="pill pill--ok" x-show="scene==='done'">已完成</span>
+                          <span class="pill pill--err" x-show="scene==='failed'">3 条未录入</span>
+                        </div>
+                        <div class="runhead__sub" x-show="scene==='failed'">共 131 条 · 耗时 13:51</div>
+                      </div>
+                      <div class="runhead__actions">
+                        <button class="btn btn--quiet btn--sm" x-show="scene==='running'">展开完整日志</button>
+                        <button class="btn btn--ghost btn--sm" x-show="scene==='done'" @click="scene='idle'">查看完整日志</button>
+                      </div>
+                    </div>
+
+                    <!-- 运行中 -->
+                    <div class="runpanel" x-show="scene==='running'" style="width:100%;display:flex;flex-direction:column;gap:9px">
+                      <div class="runnums"><span>已录入</span><b class="tnum">128</b><span>/ 131 条</span></div>
+                      <div class="nowline"><span class="pulse"></span>正在处理 第 129 行 · 王秀兰 · <span x-text="activeTask.nowHint"></span></div>
+                      <div class="log log--tight">
+                        <div class="log__row"><span class="lv"></span><span>16:42:31　读取 Excel 完成，共 131 条记录</span></div>
+                        <div class="log__row is-ok"><span class="lv"></span><span>16:55:52　第 127 行 王秀兰 · 已保存</span></div>
+                        <div class="log__row is-warn"><span class="lv"></span><span>16:55:58　第 128 行 李桂芝 · 未录入：档案不存在</span></div>
+                      </div>
+                      <div class="log__foot">
+                        <span class="hint">最近 3 条 · 共 128 条</span>
+                      </div>
+                    </div>
+
+                    <!-- 完成 -->
+                    <div class="runpanel" x-show="scene==='done'" style="width:100%;display:flex;flex-direction:column;gap:12px">
+                      <div class="okrow">
+                        <span class="okbadge"><svg class="check-anim" viewBox="0 0 24 24"><use href="#i-check"/></svg></span>
+                        <div>
+                          <div class="okrow__title">131 条全部录入成功</div>
+                          <div class="strip__meta">没有任何记录被跳过 · 全程 14 分 02 秒</div>
+                        </div>
+                      </div>
+                      <div class="log" style="max-height:80px">
+                        <div class="log__row is-ok"><span class="lv"></span><span>16:55:52　第 127 行 王秀兰 · 已保存</span></div>
+                        <div class="log__row is-ok"><span class="lv"></span><span>16:56:04　第 131 行 刘凤兰 · 已保存</span></div>
+                      </div>
+                    </div>
+
+                    <!-- 失败 -->
+                    <div class="runpanel" x-show="scene==='failed'" style="width:100%;display:flex;flex-direction:column;gap:10px">
+                      <div class="fails">
+                        <div class="fails__head"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg>3 条记录未录入</div>
+                        <div class="fails__row"><span class="ln">第 128 行</span><span>李桂芝</span><span class="why">档案不存在，系统中查无此人</span></div>
+                        <div class="fails__row"><span class="ln">第 130 行</span><span>陈国强</span><span class="why">身份证号与档案不一致</span></div>
+                        <div class="fails__row"><span class="ln">第 131 行</span><span>刘凤兰</span><span class="why">随访日期晚于今天</span></div>
+                      </div>
+                      <div class="log__foot">
+                        <span class="hint">在系统里修正后可直接重试，成功的 128 条不会重复录入</span>
+                        <button class="link link--muted" style="display:inline-flex;align-items:center;gap:4px"><svg viewBox="0 0 24 24" style="width:13px;height:13px"><use href="#i-download"/></svg>导出失败明细</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </section>
+        </template>
+      </div>
+    </div>
+
+    <!-- ============ 设置 ============ -->
+    <div class="wrap" x-show="view==='settings'">
+      <div class="settings">
+        <div class="settings__head">
+          <h1>设置</h1>
+          <p>改完立即保存，下一次启动任务时生效。任务运行中修改不影响正在跑的这一轮。</p>
+        </div>
+
+        <section class="sect">
+          <div class="sect__head">
+            <div class="sect__title">目标系统</div>
+            <div class="sect__desc">任务启动后会打开这个地址并自动登录。</div>
+          </div>
+          <div class="field-row">
+            <input class="input" value="http://60.204.158.212:30050/lsehr/index.html" spellcheck="false">
+            <button class="btn btn--ghost">恢复默认</button>
+          </div>
+        </section>
+
+        <section class="sect">
+          <div class="sect__head">
+            <div class="sect__title">浏览器与驱动</div>
+            <div class="sect__desc">用本机已安装的 Chrome 执行录入，驱动版本需要与浏览器匹配。</div>
+          </div>
+          <div class="sect__grid">
+            <div class="field" style="margin:0">
+              <div class="field__label"><span>谷歌浏览器执行文件</span><span class="chip chip--ok"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>文件存在</span></div>
+              <div class="field-row">
+                <input class="input" value="C:\Program Files\Google\Chrome\Application\chrome.exe" spellcheck="false" style="font-family:var(--mono);font-size:13px">
+                <button class="btn btn--ghost">选择…</button>
+              </div>
+            </div>
+            <div class="field" style="margin:0">
+              <div class="field__label"><span>谷歌浏览器驱动文件</span><span class="chip chip--err"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg>文件不存在</span></div>
+              <div class="field-row">
+                <input class="input" value="D:\AutoHelper\bin\common\chromedriver.exe" spellcheck="false" style="font-family:var(--mono);font-size:13px">
+                <button class="btn btn--ghost">选择…</button>
+              </div>
+              <div class="hintline" style="color:var(--err)"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg>Chrome 升级后需要换同版本驱动，点右侧按钮指定新文件</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sect">
+          <div class="sect__head">
+            <div class="sect__title">运行日志</div>
+            <div class="sect__desc">所有任务的执行记录都写在这里，超过 1 MB 自动轮转为 .1 / .2。</div>
+          </div>
+          <div class="field-row">
+            <input class="input" value="~/AuthHelper.log" readonly style="font-family:var(--mono);font-size:13px;background:var(--surface-2);color:var(--ink-2)">
+            <button class="btn btn--ghost">打开所在文件夹</button>
+          </div>
+        </section>
+
+        <section class="sect">
+          <div class="sect__head">
+            <div class="sect__title">关于</div>
+          </div>
+          <div class="sect__grid">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)">
+              <span class="brand__mark" style="width:24px;height:24px;border-radius:7px"><svg viewBox="0 0 24 24" style="width:14px;height:14px"><use href="#i-cross"/></svg></span>
+              卫生信息系统自动助手<span style="color:var(--line-2)">·</span>版本 1.10.1<span style="color:var(--line-2)">·</span>Windows 桌面版
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ 抽屉：启动任务 ============ -->
+<div class="scrim" x-show="drawerOpen" @click="closeDrawer()" x-cloak></div>
+<aside class="drawer" x-show="drawerOpen" x-cloak aria-label="启动任务">
+  <div class="drawer__head">
+    <span class="task__icon" :style="'--dc:'+activeTask.color+';--dct:'+activeTask.tint">
+      <svg viewBox="0 0 24 24"><use :href="'#'+activeTask.icon"/></svg>
+    </span>
+    <div class="drawer__htext">
+      <div class="drawer__title" x-text="activeTask.title"></div>
+      <div class="drawer__sub">读取 Excel 后逐条录入系统</div>
+    </div>
+    <button class="iconbtn" @click="closeDrawer()" aria-label="关闭"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button>
+  </div>
+
+  <div class="drawer__body">
+    <div class="field">
+      <div class="field__label"><span>Excel 文件</span><span class="opt">.xlsx</span></div>
+      <button class="filedrop">
+        <span class="filedrop__icon"><svg viewBox="0 0 24 24"><use href="#i-file"/></svg></span>
+        <span class="filedrop__text">
+          <span class="filedrop__name">高血压随访-2026年3月.xlsx</span>
+          <span class="filedrop__meta">131 条记录 · 已读取第 1 个工作表</span>
+        </span>
+        <span class="filedrop__cta">更换</span>
+      </button>
+      <div class="hintline is-ok"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>已识别表头：姓名、身份证号、随访日期、血压</div>
+    </div>
+
+    <div class="field">
+      <div class="field__label"><span>账号</span></div>
+      <input class="input" value="zhangfy" spellcheck="false" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <div class="field__label"><span>密码</span></div>
+      <div class="inputwrap">
+        <input class="input" :type="showPw ? 'text' : 'password'" value="Zfy@2026hs" spellcheck="false">
+        <button class="iconbtn" @click="showPw = !showPw" :aria-label="showPw ? '隐藏密码' : '显示密码'">
+          <svg viewBox="0 0 24 24"><use :href="showPw ? '#i-eye-off' : '#i-eye'"/></svg>
+        </button>
+      </div>
+      <div class="hintline"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>账号与密码已保存在本机，下次启动自动带出</div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--line)">
+      <div class="hintline"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg>共 131 条 · 预计 14 分钟完成</div>
+      <div class="hintline"><svg viewBox="0 0 24 24"><use href="#i-file"/></svg>Excel 只在本机读取，不会上传到其他位置</div>
+    </div>
+  </div>
+
+  <div class="drawer__foot">
+    <span class="hint">任务开始后可随时取消</span>
+    <button class="btn btn--ghost btn--lg" @click="closeDrawer()">取消</button>
+    <button class="btn btn--primary btn--lg" style="min-width:112px" @click="start()">启动任务</button>
+  </div>
+</aside>
+
+<script src="app.js"></script>
+<script defer src="vendor/alpine.min.js"></script>
+</body>
+</html>

@@ -1,23 +1,21 @@
 package tech.kotlinhero.autohelper.ui.page
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,147 +27,168 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
+import tech.kotlinhero.autohelper.AppInfo
 import tech.kotlinhero.autohelper.core.config.AppPreferences
 import tech.kotlinhero.autohelper.core.config.AppSettings
 import tech.kotlinhero.autohelper.core.config.HEALTH_SYSTEM_WEBSITE_URL
+import tech.kotlinhero.autohelper.ui.component.AppButton
+import tech.kotlinhero.autohelper.ui.component.AppTextField
+import tech.kotlinhero.autohelper.ui.component.BrandMark
+import tech.kotlinhero.autohelper.ui.component.BtnSize
+import tech.kotlinhero.autohelper.ui.component.BtnVariant
+import tech.kotlinhero.autohelper.ui.component.HairLine
+import tech.kotlinhero.autohelper.ui.component.HintLine
+import tech.kotlinhero.autohelper.ui.component.StatusChip
+import tech.kotlinhero.autohelper.ui.theme.AppColors
+import tech.kotlinhero.autohelper.ui.theme.AppType
+import java.awt.Desktop
 import java.io.File
 
+/**
+ * 设置：改完立即保存，不再需要「保存」按钮（原实现也是即改即存，这里把这件事写进说明里）。
+ * 用 hairline 分区代替一叠卡片，是因为设置项只有 4 组、层级本来就浅，卡片边框反而切碎了阅读。
+ */
 @Composable
-fun Settings() {
-    val appSettings = remember { AppSettingsState() }
+fun SettingsPage() {
+    val settings = remember { AppSettingsState() }
+    Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 20.dp).widthIn(max = 760.dp)) {
+            Text("设置", style = AppType.PageTitle, color = AppColors.Ink)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "改完立即保存，下一次启动任务时生效。任务运行中修改不影响正在跑的这一轮。",
+                style = AppType.CardDesc,
+                color = AppColors.Ink2,
+            )
+            Spacer(Modifier.height(4.dp))
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 720.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "设置",
-                    style = MaterialTheme.typography.headlineSmall,
+            Section("目标系统", "任务执行时打开这个地址。默认值是内置的基层卫生信息系统地址。") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AppTextField(
+                        value = settings.healthSystemWebsiteUrl,
+                        onValueChange = { settings.healthSystemWebsiteUrl = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = HEALTH_SYSTEM_WEBSITE_URL,
+                        mono = true,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    AppButton(
+                        text = "恢复默认",
+                        onClick = { settings.healthSystemWebsiteUrl = HEALTH_SYSTEM_WEBSITE_URL },
+                        variant = BtnVariant.Ghost,
+                        size = BtnSize.Sm,
+                        enabled = settings.healthSystemWebsiteUrl != HEALTH_SYSTEM_WEBSITE_URL,
+                    )
+                }
+            }
+
+            Section("浏览器与驱动", "任务通过本机 Chrome 执行。Chrome 自动升级后驱动会失效，需要在此指定同版本驱动文件。") {
+                PathField(
+                    label = "Chrome 执行文件",
+                    value = settings.chromeBinaryPath,
+                    onValueChange = { settings.chromeBinaryPath = it },
+                    missingHint = "没找到这个文件，请重新指定 chrome.exe 的完整路径。",
                 )
-                Text(
-                    text = "修改后立即生效并保存。账号密码随任务一起录入，不在此处维护。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Spacer(Modifier.height(16.dp))
+                PathField(
+                    label = "ChromeDriver 执行文件",
+                    value = settings.chromeDriverPath,
+                    onValueChange = { settings.chromeDriverPath = it },
+                    missingHint = "Chrome 升级后需要换同版本驱动，点右侧按钮指定新文件。",
                 )
             }
 
-            SettingsSection(
-                title = "卫生健康信息系统",
-                description = "自动登录与录入数据的目标站点地址",
-            ) {
-                val url = appSettings.healthSystemWebsiteUrl
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = url,
-                    onValueChange = { appSettings.healthSystemWebsiteUrl = it },
-                    label = { Text("系统网址") },
-                    singleLine = true,
-                    isError = url.isBlank(),
-                    supportingText = {
-                        Text(if (url.isBlank()) "网址不能为空" else "示例：$HEALTH_SYSTEM_WEBSITE_URL")
-                    },
-                    trailingIcon = {
-                        if (url != HEALTH_SYSTEM_WEBSITE_URL) {
-                            IconButton(
-                                onClick = { appSettings.healthSystemWebsiteUrl = HEALTH_SYSTEM_WEBSITE_URL }
-                            ) {
-                                Icon(Icons.Filled.Restore, contentDescription = "恢复默认网址")
-                            }
-                        }
-                    },
-                )
+            Section("运行日志", "未捕获的异常会写进这个文件，超过 1 MB 自动轮转。反馈问题时请附上最后一段。") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AppTextField(
+                        value = logFilePath(),
+                        onValueChange = {},
+                        modifier = Modifier.weight(1f),
+                        readOnly = true,
+                        mono = true,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    AppButton("打开所在文件夹", ::openLogFolder, variant = BtnVariant.Ghost, size = BtnSize.Sm)
+                }
             }
 
-            SettingsSection(
-                title = "谷歌浏览器",
-                description = "Chrome 主程序与对应版本 chromedriver 的完整路径，任务执行时使用",
-            ) {
-                FilePathSetting(
-                    label = "谷歌浏览器执行文件",
-                    description = "例如 chrome.exe 或 chrome-headless-shell.exe",
-                    value = appSettings.chromeBinaryPath,
-                    onValueChange = { appSettings.chromeBinaryPath = it },
-                )
-                FilePathSetting(
-                    label = "谷歌浏览器驱动文件",
-                    description = "与浏览器版本匹配的 chromedriver.exe",
-                    value = appSettings.chromeDriverPath,
-                    onValueChange = { appSettings.chromeDriverPath = it },
-                )
+            Section("关于", null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BrandMark(24.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "卫生信息系统自动助手 · 版本 ${AppInfo.version} · Windows 桌面版",
+                        style = AppType.Meta,
+                        color = AppColors.Ink3,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SettingsSection(
-    title: String,
-    description: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            content()
+private fun Section(title: String, description: String?, content: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 14.dp)) {
+        HairLine()
+        Spacer(Modifier.height(16.dp))
+        Text(title, style = AppType.Label.copy(fontSize = AppType.CardTitle.fontSize), color = AppColors.Ink)
+        if (description != null) {
+            Spacer(Modifier.height(3.dp))
+            Text(description, style = AppType.Meta, color = AppColors.Ink3)
         }
+        Spacer(Modifier.height(14.dp))
+        content()
+        Spacer(Modifier.height(18.dp))
     }
 }
 
 @Composable
-private fun FilePathSetting(
+private fun PathField(
     label: String,
-    description: String,
     value: String,
     onValueChange: (String) -> Unit,
+    missingHint: String,
 ) {
-    val filePicker = rememberFilePickerLauncher { file ->
-        // 取消选择时返回 null，保留原路径而不是清空
+    val picker = rememberFilePickerLauncher { file ->
+        // 取消选择时返回 null，保留原路径
         file?.path?.let(onValueChange)
     }
-    val fileExists = value.isNotBlank() && File(value).exists()
-    OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        singleLine = true,
-        isError = value.isNotBlank() && !fileExists,
-        supportingText = {
-            Text(
-                when {
-                    value.isBlank() -> description
-                    fileExists -> "文件存在"
-                    else -> "文件不存在，请重新选择"
-                }
+    val exists = value.isNotBlank() && File(value).exists()
+    val blank = value.isBlank()
+    Column(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = AppType.Label, color = AppColors.Ink2, modifier = Modifier.weight(1f))
+            if (!blank) StatusChip(if (exists) "文件存在" else "文件不存在", exists)
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AppTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                placeholder = "尚未指定",
+                mono = true,
             )
-        },
-        trailingIcon = {
-            IconButton(onClick = { filePicker.launch() }) {
-                Icon(Icons.Filled.FolderOpen, contentDescription = "选择文件")
-            }
-        },
-    )
+            Spacer(Modifier.width(8.dp))
+            AppButton("选择…", { picker.launch() }, variant = BtnVariant.Ghost, size = BtnSize.Sm)
+        }
+        if (!blank && !exists) {
+            Spacer(Modifier.height(8.dp))
+            HintLine(missingHint, tint = AppColors.Err, icon = Icons.Outlined.WarningAmber)
+        }
+    }
 }
 
+private fun logFilePath(): String = File(System.getProperty("user.home"), "AuthHelper.log").absolutePath
+
+private fun openLogFolder() {
+    runCatching {
+        Desktop.getDesktop().open(File(System.getProperty("user.home")))
+    }
+}
+
+/** 设置项直接写 AppPreferences，没有「保存」动作 */
 class AppSettingsState : AppSettings {
     private var chromeBinaryPathState by mutableStateOf(AppPreferences.chromeBinaryPath)
     private var chromeDriverPathState by mutableStateOf(AppPreferences.chromeDriverPath)
